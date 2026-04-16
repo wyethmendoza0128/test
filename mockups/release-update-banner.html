@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EHR Release Banner Mockup</title>
+  <style>
+    :root {
+      --bg-1: #eef6ff;
+      --bg-2: #f5f0ff;
+      --border: #c9dbff;
+      --title: #1f2a44;
+      --body: #4a5878;
+      --button: #2c6bed;
+      --button-hover: #245ad0;
+      --secondary: #506080;
+      --surface: #ffffff;
+      --shadow: 0 12px 24px rgba(42, 75, 145, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #f6f8fc 0%, #eef2f9 100%);
+      color: var(--title);
+      min-height: 100vh;
+    }
+
+    .app-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 56px;
+    }
+
+    .banner {
+      position: sticky;
+      top: 16px;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .banner::before,
+    .banner::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      opacity: 0.32;
+      border-radius: 999px;
+    }
+
+    .banner::before {
+      width: 180px;
+      height: 180px;
+      right: -60px;
+      top: -72px;
+      background: radial-gradient(circle, #8bb5ff 0%, transparent 70%);
+    }
+
+    .banner::after {
+      width: 140px;
+      height: 140px;
+      left: -46px;
+      bottom: -94px;
+      background: radial-gradient(circle, #c7a2ff 0%, transparent 70%);
+    }
+
+    .banner-copy {
+      position: relative;
+      min-width: 0;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      font-weight: 700;
+      color: #486bb0;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      color: var(--title);
+    }
+
+    .desc {
+      margin: 6px 0 0;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--body);
+      max-width: 700px;
+    }
+
+    .banner-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      min-width: 120px;
+      min-height: 40px;
+      transition: 140ms ease;
+      padding: 0 14px;
+    }
+
+    .primary {
+      background: var(--button);
+      color: var(--surface);
+      box-shadow: 0 6px 14px rgba(36, 90, 208, 0.32);
+    }
+
+    .primary:hover {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+    }
+
+    .primary:focus-visible,
+    .secondary:focus-visible {
+      outline: 3px solid #80aaff;
+      outline-offset: 2px;
+    }
+
+    .secondary {
+      background: rgba(80, 96, 128, 0.12);
+      color: var(--secondary);
+    }
+
+    .secondary:hover {
+      background: rgba(80, 96, 128, 0.18);
+    }
+
+    .mock-content {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid #e2e8f4;
+      box-shadow: 0 8px 18px rgba(37, 54, 92, 0.08);
+      padding: 24px;
+      color: #3f4f70;
+      min-height: 340px;
+    }
+
+    .mock-content h2 {
+      margin-top: 0;
+      color: #243554;
+    }
+
+    @media (max-width: 768px) {
+      .banner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .banner-actions {
+        width: 100%;
+      }
+
+      .banner-actions button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="banner" role="status" aria-live="polite">
+      <div class="banner-copy">
+        <p class="eyebrow">New release</p>
+        <h1 class="title">A fresh update is ready</h1>
+        <p class="desc">
+          You are viewing an older version. Reload to access the latest features and improvements.
+        </p>
+      </div>
+      <div class="banner-actions">
+        <button class="primary" id="reloadBtn" type="button">Reload now</button>
+        <button class="secondary" id="laterBtn" type="button">Later</button>
+      </div>
+    </section>
+
+    <section class="mock-content" aria-hidden="true">
+      <h2>Patient Dashboard (Example)</h2>
+      <p>
+        This section represents the existing EHR content beneath the banner. The notification remains compact and
+        visible without overwhelming clinical workflows.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const banner = document.querySelector(".banner");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const laterBtn = document.getElementById("laterBtn");
+
+    reloadBtn.addEventListener("click", () => {
+      reloadBtn.disabled = true;
+      reloadBtn.textContent = "Reloading...";
+      window.location.reload();
+    });
+
+    laterBtn.addEventListener("click", () => {
+      banner.style.display = "none";
+    });
+  </script>
+</body>
+</html>
