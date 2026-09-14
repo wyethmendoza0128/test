@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EHR Dashboard Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">E</div>
+          <div>
+            <h1>EHR Dashboard</h1>
+            <p class="subtle">First-page prototype for eye doctors and store managers</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="segmented" id="modeToggle">
+            <button class="is-active" data-mode="store">Store View</button>
+            <button data-mode="doctor">Doctor View</button>
+          </div>
+          <div class="segmented" id="periodToggle">
+            <button class="is-active" data-period="day">Day</button>
+            <button data-period="wtd">WTD</button>
+            <button data-period="mtd">MTD</button>
+          </div>
+          <div class="status-pill">
+            <span class="dot"></span>
+            <span id="liveStamp">Updated just now</span>
+          </div>
+        </div>
+      </header>
+
+      <nav class="concept-nav" id="conceptNav">
+        <button class="is-active" data-concept="concept-1">Concept 1: Operations Command Center</button>
+        <button data-concept="concept-2">Concept 2: Timeline Daily Planner</button>
+        <button data-concept="concept-3">Concept 3: Performance Coach</button>
+      </nav>
+
+      <main class="concepts">
+        <section class="concept is-active" id="concept-1">
+          <div class="kpi-grid">
+            <article class="metric-card" data-metric="examBookings">
+              <p class="metric-label">Exam bookings</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="examCount">
+              <p class="metric-label">Exam count</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="startOfDayBooked">
+              <p class="metric-label">Start of day booked</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="seenSoFar">
+              <p class="metric-label">Seen so far</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="remainingOnBooks">
+              <p class="metric-label">Remaining on books</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="egpBookings">
+              <p class="metric-label">EGP bookings</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel task-panel">
+              <div class="panel-header">
+                <h2>Today priority queue</h2>
+                <span class="badge">9 open</span>
+              </div>
+              <div class="task-columns">
+                <div class="task-group">
+                  <h3>Overdue</h3>
+                  <div class="task-item danger">
+                    <div>
+                      <p class="task-title">No-show follow-up: 3 patients</p>
+                      <p class="task-meta">Escalate within 15 min</p>
+                    </div>
+                    <div class="task-actions"><button>Call</button><button>Complete</button></div>
+                  </div>
+                </div>
+                <div class="task-group">
+                  <h3>Due this hour</h3>
+                  <div class="task-item warning">
+                    <div>
+                      <p class="task-title">Unconfirmed exams today: 5</p>
+                      <p class="task-meta">Target confirmation rate 80%</p>
+                    </div>
+                    <div class="task-actions"><button>Confirm</button><button>Reschedule</button></div>
+                  </div>
+                  <div class="task-item info">
+                    <div>
+                      <p class="task-title">CL trial orders ready for pickup: 2</p>
+                      <p class="task-meta">Notify customers before 3 PM</p>
+                    </div>
+                    <div class="task-actions"><button>Text</button><button>Complete</button></div>
+                  </div>
+                </div>
+                <div class="task-group">
+                  <h3>Upcoming</h3>
+                  <div class="task-item neutral">
+                    <div>
+                      <p class="task-title">Unconfirmed exams tomorrow: 7</p>
+                      <p class="task-meta">Batch action recommended</p>
+                    </div>
+                    <div class="task-actions"><button>Batch confirm</button></div>
+                  </div>
+                  <div class="task-item neutral">
+                    <div>
+                      <p class="task-title">Pending CL trial requests: 4</p>
+                      <p class="task-meta">Assign to floor team</p>
+                    </div>
+                    <div class="task-actions"><button>Assign</button></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel pacing-panel">
+              <div class="panel-header">
+                <h2>Pacing and progress</h2>
+              </div>
+              <div class="donut-wrap">
+                <div class="donut" id="paceDonut"><span id="pacePercent"></span></div>
+                <div class="pace-copy">
+                  <p id="paceLine"></p>
+                  <p class="subtle">Expected pace adjusts by Day / WTD / MTD scope.</p>
+                </div>
+              </div>
+              <div class="progress-ladder">
+                <div><span>9 AM</span><div class="ladder-bar"><span style="width: 22%"></span></div></div>
+                <div><span>12 PM</span><div class="ladder-bar"><span style="width: 51%"></span></div></div>
+                <div><span>3 PM</span><div class="ladder-bar"><span style="width: 68%"></span></div></div>
+                <div><span>Close</span><div class="ladder-bar"><span style="width: 100%"></span></div></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="secondary-grid">
+            <article class="panel mini-stat" data-percent-metric="sameDayConversion">
+              <h3>Same-day conversion</h3>
+              <p class="big"></p>
+              <p class="subtle"></p>
+            </article>
+            <article class="panel mini-stat" data-percent-metric="driAcceptance">
+              <h3>DRI acceptance</h3>
+              <p class="big"></p>
+              <p class="subtle"></p>
+            </article>
+            <article class="panel mini-stat" data-percent-metric="prebookRate">
+              <h3>Prebook rate</h3>
+              <p class="big"></p>
+              <p class="subtle"></p>
+            </article>
+            <article class="panel chart-card">
+              <h3>Exam type breakdown</h3>
+              <div class="stacked-bar">
+                <span style="width: 47%" class="s1">Routine</span>
+                <span style="width: 34%" class="s2">Medical</span>
+                <span style="width: 19%" class="s3">Follow-up</span>
+              </div>
+            </article>
+            <article class="panel chart-card">
+              <h3>Daily dropout net change</h3>
+              <div class="sparkline">
+                <span style="height: 45%"></span><span style="height: 31%"></span
+                ><span style="height: 49%"></span><span style="height: 37%"></span
+                ><span style="height: 54%"></span><span style="height: 40%"></span
+                ><span style="height: 63%"></span>
+              </div>
+              <p id="dropoutLabel"></p>
+            </article>
+            <article class="panel chart-card">
+              <h3>EPSH tier tracker (WTD/MTD)</h3>
+              <div class="tier-track"><span id="tierProgress"></span></div>
+              <p id="tierLabel"></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="concept" id="concept-2">
+          <div class="planner-layout">
+            <aside class="panel filter-rail">
+              <h2>Filters</h2>
+              <div class="filter-block"><label>Doctor</label><select><option>All doctors</option><option>Dr. Rivera</option><option>Dr. Shah</option></select></div>
+              <div class="filter-block"><label>Task type</label><select><option>All tasks</option><option>Outreach</option><option>CL trials</option><option>Confirmation</option></select></div>
+              <div class="filter-block"><label>Urgency</label><select><option>All</option><option>High</option><option>Medium</option><option>Low</option></select></div>
+              <div class="filter-block"><label>Status</label><select><option>Open</option><option>In progress</option><option>Done</option></select></div>
+            </aside>
+
+            <section class="panel timeline-panel">
+              <div class="panel-header">
+                <h2>Timeline workspace</h2>
+                <span class="badge">Queue health <strong id="queueHealth">82%</strong></span>
+              </div>
+              <div class="next-action">
+                <p><strong>Next best action:</strong> Confirm 3 high-value exams scheduled within the next 2 hours.</p>
+                <button>Run batch confirm</button>
+              </div>
+              <div class="timeline">
+                <div class="time-col">
+                  <span>8 AM</span><span>10 AM</span><span>12 PM</span><span>2 PM</span><span>4 PM</span><span>6 PM</span>
+                </div>
+                <div class="event-col">
+                  <article class="event high"><h3>No-show outreach</h3><p>3 patients · SLA 20 min</p><div><button>Call all</button><button>Assign</button></div></article>
+                  <article class="event medium"><h3>Same-day schedule patients</h3><p>6 patients to engage</p><div><button>Text</button><button>Log outcome</button></div></article>
+                  <article class="event medium"><h3>CL pickup ready</h3><p>2 trial orders available in-store</p><div><button>Notify</button></div></article>
+                  <article class="event high"><h3>Unconfirmed exams today</h3><p>5 remaining confirmations</p><div><button>Confirm</button><button>Reschedule</button></div></article>
+                  <article class="event low"><h3>Unconfirmed +1 and +2 day</h3><p>7 tomorrow · 4 day-after</p><div><button>Batch outreach</button></div></article>
+                </div>
+              </div>
+            </section>
+
+            <aside class="panel kpi-rail">
+              <h2>Performance snapshot</h2>
+              <div class="rail-metric" data-rail="examBookings"></div>
+              <div class="rail-metric" data-rail="examCount"></div>
+              <div class="rail-metric" data-rail="seenSoFar"></div>
+              <div class="rail-metric" data-rail="remainingOnBooks"></div>
+              <div class="thermometer">
+                <div class="thermo-fill" id="thermoFill"></div>
+              </div>
+              <p id="thermoLabel"></p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="concept" id="concept-3">
+          <article class="panel goal-storyboard">
+            <h2>Goal storyboard</h2>
+            <p id="goalSummary"></p>
+          </article>
+
+          <div class="coach-grid">
+            <article class="panel">
+              <h3>Actual vs target vs expected pace</h3>
+              <svg id="paceChart" viewBox="0 0 520 220" preserveAspectRatio="none">
+                <polyline id="lineTarget" class="line target"></polyline>
+                <polyline id="lineExpected" class="line expected"></polyline>
+                <polyline id="lineActual" class="line actual"></polyline>
+              </svg>
+            </article>
+
+            <article class="panel">
+              <h3>Exam flow waterfall</h3>
+              <div class="waterfall" id="waterfall"></div>
+            </article>
+
+            <article class="panel">
+              <h3>EPSH tier progress</h3>
+              <div class="tier-track large"><span id="coachTierProgress"></span></div>
+              <p id="coachTierLabel"></p>
+            </article>
+          </div>
+
+          <article class="panel action-workspace">
+            <div class="panel-header">
+              <h3>Goal-to-action workspace</h3>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Metric at risk</th>
+                  <th>Recommended task</th>
+                  <th>Impact</th>
+                  <th>Owner</th>
+                  <th>SLA</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Exam count pacing</td>
+                  <td>Call same-day leads not scheduled</td>
+                  <td><span class="tag high">High</span></td>
+                  <td>Store team</td>
+                  <td>30 min</td>
+                  <td><button>Start task</button></td>
+                </tr>
+                <tr>
+                  <td>Prebook rate</td>
+                  <td>Prompt prebook script at checkout</td>
+                  <td><span class="tag medium">Medium</span></td>
+                  <td>Doctor</td>
+                  <td>Today</td>
+                  <td><button>Open script</button></td>
+                </tr>
+                <tr>
+                  <td>Dropout net change</td>
+                  <td>Recover canceled slots from waitlist</td>
+                  <td><span class="tag high">High</span></td>
+                  <td>Front desk</td>
+                  <td>45 min</td>
+                  <td><button>Recover slots</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
