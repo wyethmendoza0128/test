@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exam Rooms - Day Schedule</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+        background: #f3f5fa;
+        color: #273047;
+      }
+
+      .app-shell {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 10px 10px 16px;
+      }
+
+      .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 8px;
+      }
+
+      .app-header h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .app-header p {
+        margin: 2px 0 0;
+        color: #6e7b95;
+        font-size: 12px;
+      }
+
+      .hint {
+        margin: 0;
+        font-size: 11px;
+        color: #8692a8;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 8px;
+        border: 1px solid #d7deec;
+        border-radius: 10px 10px 0 0;
+        background: #f8faff;
+      }
+
+      .left-controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .icon-btn,
+      .pill {
+        border: 1px solid #d2daea;
+        background: #fff;
+        color: #415073;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .icon-btn {
+        width: 28px;
+        padding: 0;
+      }
+
+      .pill.strong {
+        color: #202941;
+      }
+
+      .pill.subtle {
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7e8ba3;
+      }
+
+      .pill.selected {
+        background: #e8f6f6;
+        color: #0b6f73;
+        border-color: #89d6cf;
+      }
+
+      .status-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .status-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7988a6;
+        margin-right: 4px;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        border: 1px solid #d5dcec;
+        background: #fff;
+        color: #516188;
+      }
+
+      .status-chip::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .status-chip.booked {
+        color: #2f4f95;
+      }
+
+      .status-chip.arrived {
+        color: #237bb8;
+      }
+
+      .status-chip.completed {
+        color: #2f8d68;
+      }
+
+      .status-chip.prebooked {
+        color: #8c57c9;
+      }
+
+      .status-chip.cancelled {
+        color: #be4952;
+      }
+
+      .schedule-board {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        border: 1px solid #d7deec;
+        border-top: 0;
+        background: #fff;
+        min-height: 860px;
+        overflow: auto;
+      }
+
+      .time-rail {
+        position: relative;
+        border-right: 1px solid #d8dfed;
+        background: #f7f9fd;
+      }
+
+      .time-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        transform: translateY(-50%);
+        font-size: 11px;
+        color: #73829e;
+        padding-left: 8px;
+      }
+
+      .room-columns {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(260px, 1fr));
+      }
+
+      .room-column {
+        border-right: 1px solid #dce4f1;
+        position: relative;
+      }
+
+      .room-column:last-child {
+        border-right: 0;
+      }
+
+      .room-header {
+        height: 54px;
+        border-bottom: 1px solid #dce4f1;
+        padding: 8px 8px 6px;
+        background: #fcfdff;
+      }
+
+      .room-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+
+      .room-title h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: #2d3857;
+      }
+
+      .room-title span {
+        border: 1px solid #cfdaf5;
+        background: #edf3ff;
+        color: #3e58a0;
+        border-radius: 999px;
+        font-size: 9px;
+        padding: 2px 7px;
+        font-weight: 700;
+      }
+
+      .room-meta {
+        margin-top: 2px;
+        font-size: 10px;
+        color: #7e8ca8;
+      }
+
+      .events-layer {
+        position: relative;
+        height: 800px;
+      }
+
+      .hour-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 1px solid #ecf1f8;
+      }
+
+      .shift-overlay {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        border-radius: 8px;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(127, 142, 177, 0.1) 0,
+          rgba(127, 142, 177, 0.1) 7px,
+          rgba(127, 142, 177, 0.03) 7px,
+          rgba(127, 142, 177, 0.03) 14px
+        );
+        border: 1px dashed #d2d9e8;
+      }
+
+      .event-card {
+        position: absolute;
+        left: 5px;
+        right: 5px;
+        border-radius: 8px;
+        padding: 6px;
+        border: 1px solid #d9e1ef;
+        border-left-width: 4px;
+        box-shadow: 0 1px 0 rgba(19, 38, 82, 0.04);
+        background: #fff;
+        overflow: hidden;
+      }
+
+      .event-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        margin-bottom: 4px;
+      }
+
+      .meta-pill {
+        font-size: 9px;
+        border-radius: 999px;
+        border: 1px solid #d3dbeb;
+        padding: 1px 5px;
+        background: #f8fbff;
+        color: #586885;
+        font-weight: 700;
+      }
+
+      .meta-time {
+        font-size: 9px;
+        color: #8b98b4;
+        white-space: nowrap;
+      }
+
+      .event-title {
+        margin: 0;
+        font-size: 11px;
+        color: #394564;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+
+      .event-patient {
+        margin: 3px 0 0;
+        font-size: 11px;
+        color: #25314f;
+        font-weight: 600;
+      }
+
+      .event-provider {
+        margin: 2px 0 0;
+        font-size: 10px;
+        color: #7483a0;
+      }
+
+      .event-flag {
+        margin-top: 4px;
+        display: inline-flex;
+        border-radius: 999px;
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #ad5c18;
+        background: #fff4e8;
+        border: 1px solid #f2d2b4;
+        padding: 1px 5px;
+      }
+
+      .type-glasses {
+        border-left-color: #6f57c9;
+      }
+
+      .type-contact {
+        border-left-color: #3590cb;
+      }
+
+      .type-staff {
+        border-left-color: #66748d;
+      }
+
+      .type-break {
+        border-left-color: #35a589;
+      }
+
+      .type-other {
+        border-left-color: #a26045;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>Exam Rooms · Day Schedule</h1>
+          <p>Both 4 columns</p>
+        </div>
+        <p class="hint">Scanning the full day - no scrolling</p>
+      </header>
+
+      <section class="toolbar">
+        <div class="left-controls">
+          <button aria-label="Previous day" class="icon-btn">&lt;</button>
+          <button class="pill strong">Sep 10, 2025</button>
+          <button class="pill">Layout</button>
+          <button class="pill selected">Scan</button>
+          <button class="pill">Detail</button>
+          <button class="pill subtle">Density</button>
+          <button class="pill">Compact</button>
+          <button class="pill">Cozy</button>
+          <button class="pill selected">Shift overlay</button>
+        </div>
+
+        <div class="status-group">
+          <span class="status-label">Status</span>
+          <span class="status-chip booked">Booked</span>
+          <span class="status-chip arrived">Arrived</span>
+          <span class="status-chip completed">Completed</span>
+          <span class="status-chip prebooked">Pre-booked</span>
+          <span class="status-chip cancelled">Cancelled</span>
+        </div>
+      </section>
+
+      <section class="schedule-board" id="schedule-board">
+        <aside class="time-rail" id="time-rail"></aside>
+        <div class="room-columns" id="room-columns"></div>
+      </section>
+    </main>
+
+    <script>
+      const DAY_START = 8 * 60;
+      const DAY_END = 18 * 60;
+      const DAY_RANGE = DAY_END - DAY_START;
+      const BOARD_HEIGHT = 800;
+
+      const rooms = [
+        {
+          name: "Exam 1",
+          meta: "Shared room · any provider",
+          hours: "8 am - 6 pm",
+          overlays: [{ start: "11:55", end: "12:30" }],
+          events: [
+            {
+              kind: "glasses",
+              code: "CM",
+              start: "08:00",
+              end: "08:40",
+              title: "Glasses & Contacts Exam",
+              patient: "Reggie A.",
+              provider: "Stephanie Putter"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "08:15",
+              end: "08:50",
+              title: "Staff Meeting",
+              patient: "New Hire Orientation",
+              provider: "Dr. N. Oko"
+            },
+            {
+              kind: "contact",
+              code: "AI",
+              start: "09:00",
+              end: "09:30",
+              title: "Glasses & Contacts Exam",
+              patient: "Brooke V.",
+              provider: "Tanya Beck"
+            },
+            {
+              kind: "break",
+              code: "LW",
+              start: "10:45",
+              end: "11:15",
+              title: "Over Fny",
+              patient: "Marcus Bell",
+              provider: "Diana West"
+            },
+            {
+              kind: "other",
+              code: "CX",
+              start: "13:10",
+              end: "14:00",
+              title: "Glasses & Contacts Exam",
+              patient: "Nina Vermeulen",
+              provider: "Robert Seems"
+            },
+            {
+              kind: "glasses",
+              code: "PY",
+              start: "15:00",
+              end: "15:45",
+              title: "Glasses Exam",
+              patient: "Owen Frazier",
+              provider: "Sasha Ford"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "16:30",
+              end: "17:00",
+              title: "Staff Meeting",
+              patient: "Mies Turner",
+              provider: "Elaine Brooks",
+              flag: "OLDER ADULT"
+            }
+          ]
+        },
+        {
+          name: "Exam 2",
+          meta: "BR: 8 am - 12 pm · AC: 12 pm - 6 pm",
+          hours: "8 am - 6 pm",
+          overlays: [{ start: "12:35", end: "13:10" }],
+          events: [
+            {
+              kind: "glasses",
+              code: "AI",
+              start: "08:15",
+              end: "08:45",
+              title: "Glasses & Contacts Exam",
+              patient: "Grace Okafor",
+              provider: "Christina Jackson"
+            },
+            {
+              kind: "contact",
+              code: "AR",
+              start: "09:20",
+              end: "10:05",
+              title: "Glasses & Contacts Exam",
+              patient: "Nora Beal",
+              provider: "Hugh Palmer"
+            },
+            {
+              kind: "other",
+              code: "BR",
+              start: "10:40",
+              end: "11:25",
+              title: "Glasses & Contacts Exam",
+              patient: "Ravi Shah",
+              provider: "Sam Lund",
+              flag: "MINOR"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "12:40",
+              end: "13:15",
+              title: "Break",
+              patient: "Dr. Avery Furrani",
+              provider: "Exam 2"
+            },
+            {
+              kind: "glasses",
+              code: "AI",
+              start: "13:20",
+              end: "14:05",
+              title: "Glasses & Contacts Exam",
+              patient: "Helena Ruiz",
+              provider: "Paula Simms",
+              flag: "OLDER ADULT"
+            },
+            {
+              kind: "contact",
+              code: "CM",
+              start: "14:55",
+              end: "15:40",
+              title: "Glasses & Contacts Exam",
+              patient: "Dana Whitfield",
+              provider: "Michael Felone"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "16:40",
+              end: "17:20",
+              title: "Staff Meeting",
+              patient: "Jordan Vance",
+              provider: "Lucia Moreno"
+            }
+          ]
+        },
+        {
+          name: "Exam 3",
+          meta: "Shared room · any provider",
+          hours: "8 am - 6 pm",
+          overlays: [{ start: "11:05", end: "11:45" }],
+          events: [
+            {
+              kind: "glasses",
+              code: "CM",
+              start: "08:30",
+              end: "09:15",
+              title: "Glasses & Contacts Exam",
+              patient: "Corey Vasquez",
+              provider: "Devon Blake",
+              flag: "MINOR"
+            },
+            {
+              kind: "contact",
+              code: "AR",
+              start: "09:45",
+              end: "10:30",
+              title: "Contact Lens Exam",
+              patient: "Priya Nair",
+              provider: "Fiona Walsh"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "10:35",
+              end: "11:20",
+              title: "Staff Meeting",
+              patient: "Isabel Cruz",
+              provider: "Cleo Jo",
+              flag: "MINOR"
+            },
+            {
+              kind: "other",
+              code: "CX",
+              start: "12:40",
+              end: "13:20",
+              title: "Glasses & Contacts Exam",
+              patient: "Sofia Ramirez",
+              provider: "Wendy Cho"
+            },
+            {
+              kind: "glasses",
+              code: "PY",
+              start: "13:35",
+              end: "14:05",
+              title: "Glasses & Contacts Exam",
+              patient: "Tim Doolley",
+              provider: "Nasia Farr",
+              flag: "OLDER ADULT"
+            },
+            {
+              kind: "break",
+              code: "LW",
+              start: "15:15",
+              end: "15:45",
+              title: "Break",
+              patient: "Colin Reyes",
+              provider: "Dr. Artha Chen"
+            },
+            {
+              kind: "glasses",
+              code: "CM",
+              start: "15:50",
+              end: "16:35",
+              title: "Glasses & Contacts Exam",
+              patient: "Priscilla Ono",
+              provider: "Trent Boyle"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "17:15",
+              end: "17:50",
+              title: "Staff Meeting",
+              patient: "Shaun Rowan",
+              provider: "Tara Quinn"
+            }
+          ]
+        },
+        {
+          name: "Exam 4",
+          meta: "Shared room · any provider",
+          hours: "8 am - 6 pm",
+          overlays: [{ start: "10:45", end: "11:20" }],
+          events: [
+            {
+              kind: "glasses",
+              code: "CM",
+              start: "08:15",
+              end: "09:00",
+              title: "Glasses & Contacts Exam",
+              patient: "Gabriel Gomez",
+              provider: "Mona Lister"
+            },
+            {
+              kind: "glasses",
+              code: "AI",
+              start: "08:20",
+              end: "09:05",
+              title: "Glasses & Contacts Exam",
+              patient: "Gordon Pace",
+              provider: "Austin Matloff"
+            },
+            {
+              kind: "contact",
+              code: "AI",
+              start: "09:40",
+              end: "10:30",
+              title: "Glasses & Contacts Exam",
+              patient: "Christian Matias",
+              provider: "Harmoni Gao",
+              flag: "MINOR"
+            },
+            {
+              kind: "contact",
+              code: "AI",
+              start: "10:35",
+              end: "11:20",
+              title: "Glasses & Contacts Exam",
+              patient: "Steven Fredericks",
+              provider: "Emma Mullins",
+              flag: "OLDER ADULT"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "12:45",
+              end: "13:30",
+              title: "Glasses & Contacts Exam",
+              patient: "Timothy Madden",
+              provider: "Carter McCray"
+            },
+            {
+              kind: "glasses",
+              code: "AR",
+              start: "13:55",
+              end: "14:35",
+              title: "Glasses & Contacts Exam",
+              patient: "Kati Gray",
+              provider: "Brooke Monaco"
+            },
+            {
+              kind: "other",
+              code: "BK",
+              start: "14:40",
+              end: "15:25",
+              title: "Glasses & Contacts Exam",
+              patient: "Val Ito",
+              provider: "Hank Sellers"
+            },
+            {
+              kind: "staff",
+              code: "BK",
+              start: "16:45",
+              end: "17:15",
+              title: "Glasses & Contacts Exam",
+              patient: "Cleo Marah",
+              provider: "Gjon Devkuaj"
+            }
+          ]
+        }
+      ];
+
+      function timeToMinutes(timeValue) {
+        const parts = timeValue.split(":").map(Number);
+        return parts[0] * 60 + parts[1];
+      }
+
+      function toTop(startMinutes) {
+        return ((startMinutes - DAY_START) / DAY_RANGE) * BOARD_HEIGHT;
+      }
+
+      function toHeight(startMinutes, endMinutes) {
+        const rawHeight = ((endMinutes - startMinutes) / DAY_RANGE) * BOARD_HEIGHT;
+        return Math.max(rawHeight, 46);
+      }
+
+      function formatTime(timeValue) {
+        const minutes = timeToMinutes(timeValue);
+        const hours24 = Math.floor(minutes / 60);
+        const min = String(minutes % 60).padStart(2, "0");
+        const suffix = hours24 >= 12 ? "pm" : "am";
+        const hours12 = hours24 % 12 || 12;
+        return hours12 + ":" + min + " " + suffix;
+      }
+
+      function renderTimeRail() {
+        const rail = document.getElementById("time-rail");
+        rail.style.height = BOARD_HEIGHT + 54 + "px";
+
+        for (let hour = 8; hour <= 18; hour += 1) {
+          const row = document.createElement("div");
+          row.className = "time-row";
+          row.style.top = toTop(hour * 60) + 54 + "px";
+          const suffix = hour >= 12 ? "pm" : "am";
+          const hour12 = hour % 12 || 12;
+          row.textContent = hour12 + " " + suffix;
+          rail.appendChild(row);
+        }
+      }
+
+      function renderRoom(roomsContainer, room) {
+        const column = document.createElement("article");
+        column.className = "room-column";
+
+        const header = document.createElement("header");
+        header.className = "room-header";
+        header.innerHTML =
+          '<div class="room-title"><h2>' +
+          room.name +
+          "</h2><span>" +
+          room.hours +
+          '</span></div><div class="room-meta">' +
+          room.meta +
+          "</div>";
+
+        const eventsLayer = document.createElement("div");
+        eventsLayer.className = "events-layer";
+
+        for (let hour = 8; hour <= 18; hour += 1) {
+          const line = document.createElement("div");
+          line.className = "hour-line";
+          line.style.top = toTop(hour * 60) + "px";
+          eventsLayer.appendChild(line);
+        }
+
+        room.overlays.forEach((overlay) => {
+          const overlayNode = document.createElement("div");
+          overlayNode.className = "shift-overlay";
+          const start = timeToMinutes(overlay.start);
+          const end = timeToMinutes(overlay.end);
+          overlayNode.style.top = toTop(start) + "px";
+          overlayNode.style.height = toHeight(start, end) + "px";
+          eventsLayer.appendChild(overlayNode);
+        });
+
+        room.events.forEach((event) => {
+          const start = timeToMinutes(event.start);
+          const end = timeToMinutes(event.end);
+          const card = document.createElement("section");
+          card.className = "event-card type-" + event.kind;
+          card.style.top = toTop(start) + "px";
+          card.style.height = toHeight(start, end) + "px";
+
+          card.innerHTML =
+            '<div class="event-topline"><span class="meta-pill">' +
+            event.code +
+            '</span><span class="meta-time">' +
+            formatTime(event.start) +
+            " - " +
+            formatTime(event.end) +
+            '</span></div><p class="event-title">' +
+            event.title +
+            '</p><p class="event-patient">' +
+            event.patient +
+            '</p><p class="event-provider">' +
+            event.provider +
+            "</p>" +
+            (event.flag ? '<span class="event-flag">' + event.flag + "</span>" : "");
+
+          eventsLayer.appendChild(card);
+        });
+
+        column.appendChild(header);
+        column.appendChild(eventsLayer);
+        roomsContainer.appendChild(column);
+      }
+
+      function renderSchedule() {
+        renderTimeRail();
+        const roomsContainer = document.getElementById("room-columns");
+        rooms.forEach((room) => renderRoom(roomsContainer, room));
+      }
+
+      renderSchedule();
+    </script>
+  </body>
+</html>
