@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EHR Dashboard Prototype - Self Contained</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --surface: #ffffff;
+        --surface-soft: #f8faff;
+        --text: #15223b;
+        --text-soft: #5f6f8f;
+        --border: #dce4f4;
+        --primary: #1f6feb;
+        --danger: #cc3b3b;
+        --warning: #b98300;
+        --shadow: 0 16px 34px rgba(20, 38, 76, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top right, #e9f1ff 0%, var(--bg) 42%);
+        color: var(--text);
+        font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      .page {
+        max-width: 1480px;
+        margin: 0 auto;
+        padding: 24px 28px 48px;
+      }
+
+      .topbar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(140deg, #1f6feb, #3d8cff);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .subtle {
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 13px;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .segmented {
+        display: flex;
+        gap: 6px;
+        border: 1px solid var(--border);
+        background: var(--surface-soft);
+        border-radius: 12px;
+        padding: 4px;
+      }
+
+      .segmented button {
+        border: none;
+        border-radius: 9px;
+        padding: 8px 12px;
+        background: transparent;
+        color: var(--text-soft);
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .segmented button.is-active {
+        background: var(--surface);
+        color: var(--primary);
+        box-shadow: 0 4px 12px rgba(34, 76, 153, 0.14);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #effaf4;
+        color: #0d6d41;
+        border: 1px solid #caeedd;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #15b268;
+      }
+
+      .concept-nav {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .concept-nav button {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--text-soft);
+        text-align: left;
+        padding: 12px 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .concept-nav button.is-active {
+        color: var(--primary);
+        border-color: #bad0ff;
+        background: linear-gradient(180deg, #ffffff, #f4f8ff);
+        box-shadow: var(--shadow);
+      }
+
+      .concept {
+        margin-top: 14px;
+        display: none;
+      }
+
+      .concept.is-active {
+        display: block;
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: var(--shadow);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .badge {
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid #d6e4ff;
+        background: #f2f7ff;
+        color: var(--primary);
+        border-radius: 999px;
+        padding: 6px 10px;
+      }
+
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .metric-card {
+        background: linear-gradient(180deg, #fff, #fbfdff);
+        border: 1px solid #d9e2f5;
+        border-radius: 14px;
+        padding: 12px;
+      }
+
+      .metric-label {
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .metric-actual {
+        margin-top: 8px;
+        font-size: 24px;
+      }
+
+      .metric-target,
+      .metric-trend {
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .progress-track {
+        margin-top: 10px;
+        height: 8px;
+        background: #ebf1ff;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #3d8cff, #1f6feb);
+      }
+
+      .content-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 10px;
+      }
+
+      .task-group h3 {
+        margin: 8px 0;
+        font-size: 13px;
+        color: var(--text-soft);
+      }
+
+      .task-item {
+        border: 1px solid var(--border);
+        border-left-width: 5px;
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .task-item.danger {
+        border-left-color: var(--danger);
+        background: #fff7f7;
+      }
+
+      .task-item.warning {
+        border-left-color: var(--warning);
+        background: #fffaf1;
+      }
+
+      .task-item.info {
+        border-left-color: var(--primary);
+        background: #f4f8ff;
+      }
+
+      .task-item.neutral {
+        border-left-color: #8ba0c6;
+      }
+
+      .task-title {
+        font-weight: 700;
+      }
+
+      .task-meta {
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .task-actions button,
+      .event button,
+      .next-action button,
+      .action-workspace button {
+        border: 1px solid #c8d6f7;
+        background: #fff;
+        color: #2357ba;
+        border-radius: 9px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .donut-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .donut {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: conic-gradient(#1f6feb 0deg, #1f6feb 220deg, #ebf1ff 220deg);
+      }
+
+      .donut:before {
+        content: "";
+        width: 82px;
+        height: 82px;
+        border-radius: 50%;
+        background: var(--surface);
+      }
+
+      .donut span {
+        position: absolute;
+        font-weight: 800;
+        font-size: 21px;
+      }
+
+      .progress-ladder {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .progress-ladder > div {
+        display: grid;
+        grid-template-columns: 50px 1fr;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-soft);
+        align-items: center;
+      }
+
+      .ladder-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #ebf1ff;
+      }
+
+      .ladder-bar span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #1f6feb, #4f96ff);
+        border-radius: inherit;
+      }
+
+      .secondary-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .mini-stat .big {
+        font-size: 28px;
+        font-weight: 800;
+        margin-top: 8px;
+      }
+
+      .stacked-bar {
+        display: flex;
+        margin-top: 12px;
+        border-radius: 999px;
+        overflow: hidden;
+        height: 26px;
+      }
+
+      .stacked-bar span {
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .s1 {
+        background: #1f6feb;
+      }
+      .s2 {
+        background: #47a0ff;
+      }
+      .s3 {
+        background: #6cc5ff;
+      }
+
+      .sparkline {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        height: 58px;
+        align-items: end;
+      }
+
+      .sparkline span {
+        border-radius: 5px 5px 2px 2px;
+        background: linear-gradient(180deg, #9dc4ff, #3c84ef);
+      }
+
+      .tier-track {
+        margin-top: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #ecf2fd;
+        overflow: hidden;
+      }
+
+      .tier-track span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #13b267, #118a53);
+      }
+
+      .planner-layout {
+        display: grid;
+        grid-template-columns: 230px 1fr 310px;
+        gap: 10px;
+      }
+
+      .filter-block {
+        margin-top: 12px;
+      }
+
+      .filter-block label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--text-soft);
+      }
+
+      select {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 8px;
+      }
+
+      .next-action {
+        border: 1px dashed #bed2ff;
+        background: #f5f9ff;
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .next-action p {
+        color: #1b3b74;
+        font-size: 14px;
+      }
+
+      .timeline {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 66px 1fr;
+        gap: 12px;
+      }
+
+      .time-col {
+        display: grid;
+        gap: 31px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .event-col {
+        display: grid;
+        gap: 10px;
+      }
+
+      .event {
+        border: 1px solid var(--border);
+        border-left-width: 5px;
+        border-radius: 11px;
+        background: #fff;
+        padding: 11px;
+      }
+
+      .event.high {
+        border-left-color: var(--danger);
+      }
+      .event.medium {
+        border-left-color: var(--warning);
+      }
+      .event.low {
+        border-left-color: #7c95c5;
+      }
+
+      .event p {
+        margin-top: 5px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .event div {
+        margin-top: 8px;
+      }
+
+      .rail-metric {
+        margin-top: 10px;
+        border: 1px solid var(--border);
+        background: #fbfdff;
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      .rail-metric h4 {
+        color: var(--text-soft);
+        font-size: 13px;
+      }
+
+      .rail-metric p {
+        margin-top: 6px;
+        font-size: 19px;
+        font-weight: 800;
+      }
+
+      .thermometer {
+        margin-top: 14px;
+        background: #edf3ff;
+        height: 18px;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .thermo-fill {
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #1f6feb, #55a0ff);
+      }
+
+      .goal-storyboard {
+        background: linear-gradient(130deg, #182f5c, #1f478a);
+        color: #f0f5ff;
+        border: none;
+      }
+
+      .goal-storyboard p {
+        margin-top: 8px;
+        font-size: 17px;
+      }
+
+      .coach-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr;
+        gap: 10px;
+      }
+
+      #paceChart {
+        margin-top: 10px;
+        width: 100%;
+        height: 220px;
+        border: 1px solid #e4ebfa;
+        border-radius: 10px;
+        background: repeating-linear-gradient(
+            to top,
+            #f6f9ff,
+            #f6f9ff 43px,
+            #edf3ff 43px,
+            #edf3ff 44px
+          ),
+          repeating-linear-gradient(to right, transparent, transparent 72px, #eff4ff 73px, #eff4ff 74px);
+      }
+
+      .line {
+        fill: none;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .line.target {
+        stroke: #9baecc;
+      }
+      .line.expected {
+        stroke: #47a0ff;
+      }
+      .line.actual {
+        stroke: #1f6feb;
+      }
+
+      .waterfall {
+        margin-top: 10px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .wf-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 46px;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .wf-bar {
+        height: 16px;
+        border-radius: 5px;
+        background: #ebf1ff;
+        overflow: hidden;
+      }
+
+      .wf-bar span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #4f96ff, #1f6feb);
+      }
+
+      .tier-track.large {
+        height: 16px;
+      }
+
+      .action-workspace {
+        margin-top: 12px;
+      }
+
+      table {
+        margin-top: 8px;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e9eefb;
+        text-align: left;
+        padding: 10px 8px;
+      }
+
+      th {
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .tag.high {
+        background: #ffeaea;
+        color: #a32d2d;
+      }
+
+      .tag.medium {
+        background: #fff6df;
+        color: #946504;
+      }
+
+      @media (max-width: 1320px) {
+        .kpi-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .secondary-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .planner-layout,
+        .coach-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .concept-nav {
+          grid-template-columns: 1fr;
+        }
+
+        .content-grid,
+        .kpi-grid,
+        .secondary-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">E</div>
+          <div>
+            <h1>EHR Dashboard</h1>
+            <p class="subtle">Self-contained high-fidelity prototype for eye doctors and store managers</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="segmented" id="modeToggle">
+            <button class="is-active" data-mode="store">Store View</button>
+            <button data-mode="doctor">Doctor View</button>
+          </div>
+          <div class="segmented" id="periodToggle">
+            <button class="is-active" data-period="day">Day</button>
+            <button data-period="wtd">WTD</button>
+            <button data-period="mtd">MTD</button>
+          </div>
+          <div class="status-pill">
+            <span class="dot"></span>
+            <span id="liveStamp">Updated just now</span>
+          </div>
+        </div>
+      </header>
+
+      <nav class="concept-nav" id="conceptNav">
+        <button class="is-active" data-concept="concept-1">Concept 1: Operations Command Center</button>
+        <button data-concept="concept-2">Concept 2: Timeline Daily Planner</button>
+        <button data-concept="concept-3">Concept 3: Performance Coach</button>
+      </nav>
+
+      <main>
+        <section class="concept is-active" id="concept-1">
+          <div class="kpi-grid">
+            <article class="metric-card" data-metric="examBookings">
+              <p class="metric-label">Exam bookings</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="examCount">
+              <p class="metric-label">Exam count</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="startOfDayBooked">
+              <p class="metric-label">Start of day booked</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="seenSoFar">
+              <p class="metric-label">Seen so far</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="remainingOnBooks">
+              <p class="metric-label">Remaining on books</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+            <article class="metric-card" data-metric="egpBookings">
+              <p class="metric-label">EGP bookings</p>
+              <h3 class="metric-actual"></h3>
+              <p class="metric-target"></p>
+              <div class="progress-track"><span class="progress-fill"></span></div>
+              <p class="metric-trend"></p>
+            </article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Today priority queue</h2>
+                <span class="badge">9 open</span>
+              </div>
+              <div class="task-group">
+                <h3>Overdue</h3>
+                <div class="task-item danger">
+                  <div>
+                    <p class="task-title">No-show follow-up: 3 patients</p>
+                    <p class="task-meta">Escalate within 15 min</p>
+                  </div>
+                  <div class="task-actions"><button>Call</button><button>Complete</button></div>
+                </div>
+              </div>
+              <div class="task-group">
+                <h3>Due this hour</h3>
+                <div class="task-item warning">
+                  <div>
+                    <p class="task-title">Unconfirmed exams today: 5</p>
+                    <p class="task-meta">Target confirmation rate 80%</p>
+                  </div>
+                  <div class="task-actions"><button>Confirm</button><button>Reschedule</button></div>
+                </div>
+                <div class="task-item info">
+                  <div>
+                    <p class="task-title">CL trial pickup ready: 2</p>
+                    <p class="task-meta">Notify customers before 3 PM</p>
+                  </div>
+                  <div class="task-actions"><button>Text</button><button>Complete</button></div>
+                </div>
+              </div>
+              <div class="task-group">
+                <h3>Upcoming</h3>
+                <div class="task-item neutral">
+                  <div>
+                    <p class="task-title">Unconfirmed exams tomorrow: 7</p>
+                    <p class="task-meta">Batch action recommended</p>
+                  </div>
+                  <div class="task-actions"><button>Batch confirm</button></div>
+                </div>
+                <div class="task-item neutral">
+                  <div>
+                    <p class="task-title">Pending CL trial requests: 4</p>
+                    <p class="task-meta">Assign to floor team</p>
+                  </div>
+                  <div class="task-actions"><button>Assign</button></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header"><h2>Pacing and progress</h2></div>
+              <div class="donut-wrap">
+                <div class="donut" id="paceDonut"><span id="pacePercent"></span></div>
+                <div>
+                  <p id="paceLine"></p>
+                  <p class="subtle">Expected pace adjusts by Day / WTD / MTD scope.</p>
+                </div>
+              </div>
+              <div class="progress-ladder">
+                <div><span>9 AM</span><div class="ladder-bar"><span style="width: 22%"></span></div></div>
+                <div><span>12 PM</span><div class="ladder-bar"><span style="width: 51%"></span></div></div>
+                <div><span>3 PM</span><div class="ladder-bar"><span style="width: 68%"></span></div></div>
+                <div><span>Close</span><div class="ladder-bar"><span style="width: 100%"></span></div></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="secondary-grid">
+            <article class="panel mini-stat" data-percent-metric="sameDayConversion">
+              <h3>Same-day conversion</h3>
+              <p class="big"></p>
+              <p class="subtle"></p>
+            </article>
+            <article class="panel mini-stat" data-percent-metric="driAcceptance">
+              <h3>DRI acceptance</h3>
+              <p class="big"></p>
+              <p class="subtle"></p>
+            </article>
+            <article class="panel mini-stat" data-percent-metric="prebookRate">
+              <h3>Prebook rate</h3>
+              <p class="big"></p>
+              <p class="subtle"></p>
+            </article>
+            <article class="panel">
+              <h3>Exam type breakdown</h3>
+              <div class="stacked-bar">
+                <span style="width: 47%" class="s1">Routine</span>
+                <span style="width: 34%" class="s2">Medical</span>
+                <span style="width: 19%" class="s3">Follow-up</span>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>Daily dropout net change</h3>
+              <div class="sparkline">
+                <span style="height: 45%"></span><span style="height: 31%"></span
+                ><span style="height: 49%"></span><span style="height: 37%"></span
+                ><span style="height: 54%"></span><span style="height: 40%"></span
+                ><span style="height: 63%"></span>
+              </div>
+              <p id="dropoutLabel" class="subtle" style="margin-top: 8px"></p>
+            </article>
+            <article class="panel">
+              <h3>EPSH tier tracker (WTD/MTD)</h3>
+              <div class="tier-track"><span id="tierProgress"></span></div>
+              <p id="tierLabel" class="subtle" style="margin-top: 8px"></p>
+            </article>
+          </div>
+        </section>
+
+        <section class="concept" id="concept-2">
+          <div class="planner-layout">
+            <aside class="panel">
+              <h2>Filters</h2>
+              <div class="filter-block">
+                <label>Doctor</label>
+                <select>
+                  <option>All doctors</option>
+                  <option>Dr. Rivera</option>
+                  <option>Dr. Shah</option>
+                </select>
+              </div>
+              <div class="filter-block">
+                <label>Task type</label>
+                <select>
+                  <option>All tasks</option>
+                  <option>Outreach</option>
+                  <option>CL trials</option>
+                  <option>Confirmation</option>
+                </select>
+              </div>
+              <div class="filter-block">
+                <label>Urgency</label>
+                <select>
+                  <option>All</option>
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                </select>
+              </div>
+              <div class="filter-block">
+                <label>Status</label>
+                <select>
+                  <option>Open</option>
+                  <option>In progress</option>
+                  <option>Done</option>
+                </select>
+              </div>
+            </aside>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Timeline workspace</h2>
+                <span class="badge">Queue health <strong id="queueHealth">82%</strong></span>
+              </div>
+              <div class="next-action">
+                <p><strong>Next best action:</strong> Confirm 3 high-value exams scheduled in next 2 hours.</p>
+                <button>Run batch confirm</button>
+              </div>
+              <div class="timeline">
+                <div class="time-col">
+                  <span>8 AM</span><span>10 AM</span><span>12 PM</span><span>2 PM</span><span>4 PM</span
+                  ><span>6 PM</span>
+                </div>
+                <div class="event-col">
+                  <article class="event high">
+                    <h3>No-show outreach</h3>
+                    <p>3 patients - SLA 20 min</p>
+                    <div><button>Call all</button> <button>Assign</button></div>
+                  </article>
+                  <article class="event medium">
+                    <h3>Same-day schedule patients</h3>
+                    <p>6 patients to engage</p>
+                    <div><button>Text</button> <button>Log outcome</button></div>
+                  </article>
+                  <article class="event medium">
+                    <h3>CL pickup ready</h3>
+                    <p>2 trial orders available in-store</p>
+                    <div><button>Notify</button></div>
+                  </article>
+                  <article class="event high">
+                    <h3>Unconfirmed exams today</h3>
+                    <p>5 remaining confirmations</p>
+                    <div><button>Confirm</button> <button>Reschedule</button></div>
+                  </article>
+                  <article class="event low">
+                    <h3>Unconfirmed +1 and +2 day</h3>
+                    <p>7 tomorrow - 4 day-after</p>
+                    <div><button>Batch outreach</button></div>
+                  </article>
+                </div>
+              </div>
+            </section>
+
+            <aside class="panel">
+              <h2>Performance snapshot</h2>
+              <div class="rail-metric" data-rail="examBookings"></div>
+              <div class="rail-metric" data-rail="examCount"></div>
+              <div class="rail-metric" data-rail="seenSoFar"></div>
+              <div class="rail-metric" data-rail="remainingOnBooks"></div>
+              <div class="thermometer"><div class="thermo-fill" id="thermoFill"></div></div>
+              <p id="thermoLabel" class="subtle" style="margin-top: 8px"></p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="concept" id="concept-3">
+          <article class="panel goal-storyboard">
+            <h2>Goal storyboard</h2>
+            <p id="goalSummary"></p>
+          </article>
+
+          <div class="coach-grid">
+            <article class="panel">
+              <h3>Actual vs target vs expected pace</h3>
+              <svg id="paceChart" viewBox="0 0 520 220" preserveAspectRatio="none">
+                <polyline id="lineTarget" class="line target"></polyline>
+                <polyline id="lineExpected" class="line expected"></polyline>
+                <polyline id="lineActual" class="line actual"></polyline>
+              </svg>
+            </article>
+            <article class="panel">
+              <h3>Exam flow waterfall</h3>
+              <div class="waterfall" id="waterfall"></div>
+            </article>
+            <article class="panel">
+              <h3>EPSH tier progress</h3>
+              <div class="tier-track large"><span id="coachTierProgress"></span></div>
+              <p id="coachTierLabel" class="subtle" style="margin-top: 8px"></p>
+            </article>
+          </div>
+
+          <article class="panel action-workspace">
+            <h3>Goal-to-action workspace</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Metric at risk</th>
+                  <th>Recommended task</th>
+                  <th>Impact</th>
+                  <th>Owner</th>
+                  <th>SLA</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Exam count pacing</td>
+                  <td>Call same-day leads not scheduled</td>
+                  <td><span class="tag high">High</span></td>
+                  <td>Store team</td>
+                  <td>30 min</td>
+                  <td><button>Start task</button></td>
+                </tr>
+                <tr>
+                  <td>Prebook rate</td>
+                  <td>Prompt prebook script at checkout</td>
+                  <td><span class="tag medium">Medium</span></td>
+                  <td>Doctor</td>
+                  <td>Today</td>
+                  <td><button>Open script</button></td>
+                </tr>
+                <tr>
+                  <td>Dropout net change</td>
+                  <td>Recover canceled slots from waitlist</td>
+                  <td><span class="tag high">High</span></td>
+                  <td>Front desk</td>
+                  <td>45 min</td>
+                  <td><button>Recover slots</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const dashboardData = {
+        store: {
+          day: {
+            core: {
+              examBookings: { actual: 18, target: 24, trend: "+2 vs yesterday" },
+              examCount: { actual: 14, target: 22, trend: "5 needed to hit pace by 4 PM" },
+              startOfDayBooked: { actual: 21, target: 24, trend: "88% load at open" },
+              seenSoFar: { actual: 14, target: 22, trend: "3 patients in current queue" },
+              remainingOnBooks: { actual: 7, target: 10, trend: "2 high-value exams unconfirmed" },
+              egpBookings: { actual: 11, target: 16, trend: "AOV $326" }
+            },
+            pacing: { percent: 58, expected: 63, status: "Slightly behind expected pace." },
+            secondary: {
+              sameDayConversion: { value: 54, detail: "Target 60% | +4 pts WoW" },
+              driAcceptance: { value: 67, detail: "Target 70% | Stable vs yesterday" },
+              prebookRate: { value: 41, detail: "Target 50% | Focus checkout scripting" }
+            },
+            dropout: { label: "+10% net gain on day (10 -> 11 exams)" },
+            epsh: { progress: 72, label: "Tier 2 pacing. 13 points to Tier 3." },
+            coach: {
+              summary: "Today target: 22 exams | Current: 14 | On pace: No | Needed by 3 PM: +4 completed exams",
+              lines: {
+                target: [8, 18, 30, 45, 62, 78, 92, 100],
+                expected: [6, 14, 27, 41, 58, 71, 85, 96],
+                actual: [4, 11, 20, 31, 44, 58, 67, 73]
+              },
+              waterfall: [
+                { label: "Booked AM", value: 21 },
+                { label: "Seen", value: 14 },
+                { label: "No-shows", value: 3 },
+                { label: "Recovered", value: 2 },
+                { label: "Net total", value: 13 }
+              ]
+            },
+            planner: { queueHealth: 82 }
+          },
+          wtd: {
+            core: {
+              examBookings: { actual: 94, target: 110, trend: "86% to weekly target" },
+              examCount: { actual: 79, target: 98, trend: "Need 19 by week close" },
+              startOfDayBooked: { actual: 110, target: 120, trend: "Front-loaded well this week" },
+              seenSoFar: { actual: 79, target: 98, trend: "Consistent throughput trend" },
+              remainingOnBooks: { actual: 31, target: 42, trend: "Pipeline healthy for Fri/Sat" },
+              egpBookings: { actual: 56, target: 68, trend: "AOV $334" }
+            },
+            pacing: { percent: 74, expected: 70, status: "Ahead of expected weekly pace." },
+            secondary: {
+              sameDayConversion: { value: 58, detail: "Target 60% | +2 pts vs last week" },
+              driAcceptance: { value: 71, detail: "Target 70% | Above target" },
+              prebookRate: { value: 46, detail: "Target 50% | Improving trend" }
+            },
+            dropout: { label: "+4% net change WTD" },
+            epsh: { progress: 78, label: "Tier 2 secure. Near Tier 3 threshold." },
+            coach: {
+              summary: "WTD target: 98 exams | Current: 79 | On pace: Yes | Remaining: 19 exams this week",
+              lines: {
+                target: [12, 24, 38, 52, 68, 82, 94, 100],
+                expected: [10, 21, 33, 47, 61, 76, 88, 97],
+                actual: [11, 22, 36, 50, 67, 79, 89, 98]
+              },
+              waterfall: [
+                { label: "Booked", value: 110 },
+                { label: "Seen", value: 79 },
+                { label: "No-shows", value: 12 },
+                { label: "Recovered", value: 8 },
+                { label: "Net total", value: 75 }
+              ]
+            },
+            planner: { queueHealth: 88 }
+          },
+          mtd: {
+            core: {
+              examBookings: { actual: 401, target: 460, trend: "87% to month target" },
+              examCount: { actual: 349, target: 420, trend: "Need 71 to close month" },
+              startOfDayBooked: { actual: 460, target: 500, trend: "Strong opening funnel this month" },
+              seenSoFar: { actual: 349, target: 420, trend: "Retention holding above plan" },
+              remainingOnBooks: { actual: 111, target: 140, trend: "Upside available in follow-ups" },
+              egpBookings: { actual: 231, target: 280, trend: "AOV $339" }
+            },
+            pacing: { percent: 83, expected: 79, status: "Ahead of expected monthly pace." },
+            secondary: {
+              sameDayConversion: { value: 61, detail: "Target 60% | Sustained gain" },
+              driAcceptance: { value: 73, detail: "Target 70% | Healthy margin" },
+              prebookRate: { value: 49, detail: "Target 50% | Almost at target" }
+            },
+            dropout: { label: "+2% net change MTD" },
+            epsh: { progress: 86, label: "Tier 3 tracking. 9 points to max tier." },
+            coach: {
+              summary:
+                "MTD target: 420 exams | Current: 349 | On pace: Yes | Required close pace: +12 exams/day",
+              lines: {
+                target: [9, 20, 31, 43, 56, 69, 84, 100],
+                expected: [8, 18, 29, 41, 53, 66, 80, 94],
+                actual: [9, 19, 32, 45, 59, 74, 87, 99]
+              },
+              waterfall: [
+                { label: "Booked", value: 460 },
+                { label: "Seen", value: 349 },
+                { label: "No-shows", value: 44 },
+                { label: "Recovered", value: 30 },
+                { label: "Net total", value: 335 }
+              ]
+            },
+            planner: { queueHealth: 91 }
+          }
+        },
+        doctor: {
+          day: {
+            core: {
+              examBookings: { actual: 7, target: 9, trend: "+1 vs yesterday" },
+              examCount: { actual: 6, target: 8, trend: "2 to hit personal pace" },
+              startOfDayBooked: { actual: 8, target: 9, trend: "89% loaded at open" },
+              seenSoFar: { actual: 6, target: 8, trend: "1 in chair, 1 waiting" },
+              remainingOnBooks: { actual: 2, target: 3, trend: "1 unconfirmed high value" },
+              egpBookings: { actual: 4, target: 6, trend: "AOV $354" }
+            },
+            pacing: { percent: 69, expected: 65, status: "Slightly ahead of expected pace." },
+            secondary: {
+              sameDayConversion: { value: 62, detail: "Target 65% | Close gap with outreach" },
+              driAcceptance: { value: 75, detail: "Target 74% | Above target" },
+              prebookRate: { value: 47, detail: "Target 52% | Moderate gap" }
+            },
+            dropout: { label: "0% net change today" },
+            epsh: { progress: 74, label: "Tier 2 pacing for individual doctor." },
+            coach: {
+              summary:
+                "Doctor target: 8 exams | Current: 6 | On pace: Yes | Needed by 3 PM: +1 completed exam",
+              lines: {
+                target: [12, 22, 35, 48, 62, 75, 89, 100],
+                expected: [9, 20, 32, 45, 58, 71, 83, 95],
+                actual: [11, 19, 34, 50, 63, 73, 84, 92]
+              },
+              waterfall: [
+                { label: "Booked AM", value: 8 },
+                { label: "Seen", value: 6 },
+                { label: "No-shows", value: 1 },
+                { label: "Recovered", value: 1 },
+                { label: "Net total", value: 6 }
+              ]
+            },
+            planner: { queueHealth: 86 }
+          },
+          wtd: {
+            core: {
+              examBookings: { actual: 38, target: 45, trend: "84% weekly goal completion" },
+              examCount: { actual: 33, target: 40, trend: "Need 7 by week close" },
+              startOfDayBooked: { actual: 45, target: 50, trend: "High consistency this week" },
+              seenSoFar: { actual: 33, target: 40, trend: "Strong conversion from bookings" },
+              remainingOnBooks: { actual: 12, target: 14, trend: "Light confirmation backlog" },
+              egpBookings: { actual: 21, target: 26, trend: "AOV $349" }
+            },
+            pacing: { percent: 79, expected: 72, status: "Ahead of expected weekly pace." },
+            secondary: {
+              sameDayConversion: { value: 64, detail: "Target 65% | +3 pts vs prior week" },
+              driAcceptance: { value: 77, detail: "Target 74% | Excellent trend" },
+              prebookRate: { value: 50, detail: "Target 52% | Near target" }
+            },
+            dropout: { label: "+3% net change WTD" },
+            epsh: { progress: 82, label: "Tier 2 solid. Near Tier 3." },
+            coach: {
+              summary: "WTD doctor target: 40 exams | Current: 33 | On pace: Yes | Remaining: 7 this week",
+              lines: {
+                target: [10, 23, 36, 50, 64, 79, 90, 100],
+                expected: [8, 20, 33, 46, 59, 72, 84, 94],
+                actual: [9, 22, 35, 49, 66, 80, 91, 99]
+              },
+              waterfall: [
+                { label: "Booked", value: 45 },
+                { label: "Seen", value: 33 },
+                { label: "No-shows", value: 4 },
+                { label: "Recovered", value: 3 },
+                { label: "Net total", value: 32 }
+              ]
+            },
+            planner: { queueHealth: 90 }
+          },
+          mtd: {
+            core: {
+              examBookings: { actual: 161, target: 190, trend: "85% monthly completion" },
+              examCount: { actual: 141, target: 170, trend: "Need 29 to close month" },
+              startOfDayBooked: { actual: 190, target: 210, trend: "Consistent patient pipeline" },
+              seenSoFar: { actual: 141, target: 170, trend: "Throughput stable month-over-month" },
+              remainingOnBooks: { actual: 49, target: 55, trend: "Opportunity in reminder campaigns" },
+              egpBookings: { actual: 95, target: 112, trend: "AOV $357" }
+            },
+            pacing: { percent: 84, expected: 80, status: "Ahead of expected monthly pace." },
+            secondary: {
+              sameDayConversion: { value: 66, detail: "Target 65% | Above target" },
+              driAcceptance: { value: 79, detail: "Target 74% | Best in district" },
+              prebookRate: { value: 53, detail: "Target 52% | Surpassed target" }
+            },
+            dropout: { label: "+1% net change MTD" },
+            epsh: { progress: 89, label: "Tier 3 tracking. Close to max tier." },
+            coach: {
+              summary:
+                "MTD doctor target: 170 exams | Current: 141 | On pace: Yes | Required close pace: +5/day",
+              lines: {
+                target: [9, 20, 32, 44, 57, 70, 84, 100],
+                expected: [8, 18, 29, 41, 53, 67, 81, 94],
+                actual: [9, 20, 33, 46, 61, 75, 88, 99]
+              },
+              waterfall: [
+                { label: "Booked", value: 190 },
+                { label: "Seen", value: 141 },
+                { label: "No-shows", value: 20 },
+                { label: "Recovered", value: 15 },
+                { label: "Net total", value: 136 }
+              ]
+            },
+            planner: { queueHealth: 92 }
+          }
+        }
+      };
+
+      const state = { mode: "store", period: "day", concept: "concept-1", lastUpdated: new Date() };
+
+      function currentData() {
+        return dashboardData[state.mode][state.period];
+      }
+
+      function ratio(actual, target) {
+        if (!target) return 0;
+        return Math.max(0, Math.min(120, Math.round((actual / target) * 100)));
+      }
+
+      function updateMetrics() {
+        const core = currentData().core;
+        document.querySelectorAll(".metric-card").forEach((card) => {
+          const key = card.dataset.metric;
+          const metric = core[key];
+          if (!metric) return;
+          const pct = ratio(metric.actual, metric.target);
+          card.querySelector(".metric-actual").textContent = metric.actual;
+          card.querySelector(".metric-target").textContent = `Target ${metric.target} - ${pct}% to target`;
+          card.querySelector(".metric-trend").textContent = metric.trend;
+          card.querySelector(".progress-fill").style.width = `${Math.min(pct, 100)}%`;
+        });
+      }
+
+      function updateSecondary() {
+        const data = currentData();
+        document.querySelectorAll("[data-percent-metric]").forEach((node) => {
+          const key = node.dataset.percentMetric;
+          const item = data.secondary[key];
+          if (!item) return;
+          node.querySelector(".big").textContent = `${item.value}%`;
+          node.querySelector(".subtle").textContent = item.detail;
+        });
+        document.getElementById("dropoutLabel").textContent = data.dropout.label;
+        document.getElementById("tierLabel").textContent = data.epsh.label;
+        document.getElementById("tierProgress").style.width = `${data.epsh.progress}%`;
+      }
+
+      function updatePacing() {
+        const pace = currentData().pacing;
+        const donut = document.getElementById("paceDonut");
+        const deg = Math.round((Math.min(pace.percent, 100) / 100) * 360);
+        donut.style.background = `conic-gradient(#1f6feb 0deg, #1f6feb ${deg}deg, #ebf1ff ${deg}deg)`;
+        document.getElementById("pacePercent").textContent = `${pace.percent}%`;
+        document.getElementById("paceLine").textContent = `${pace.status} Expected: ${pace.expected}%`;
+      }
+
+      function updatePlannerRail() {
+        const data = currentData();
+        const labels = {
+          examBookings: "Exam bookings",
+          examCount: "Exam count",
+          seenSoFar: "Seen so far",
+          remainingOnBooks: "Remaining"
+        };
+        document.querySelectorAll("[data-rail]").forEach((node) => {
+          const key = node.dataset.rail;
+          const metric = data.core[key];
+          node.innerHTML = `<h4>${labels[key]}</h4><p>${metric.actual} / ${metric.target}</p>`;
+        });
+        document.getElementById("thermoFill").style.width = `${Math.min(data.pacing.percent, 100)}%`;
+        document.getElementById("thermoLabel").textContent = `Pace thermometer: ${data.pacing.percent}% to target`;
+        document.getElementById("queueHealth").textContent = `${data.planner.queueHealth}%`;
+      }
+
+      function toPolyline(values, width, height) {
+        const xPad = 16;
+        const yPad = 18;
+        const usableWidth = width - xPad * 2;
+        const usableHeight = height - yPad * 2;
+        return values
+          .map((value, index) => {
+            const x = xPad + (usableWidth * index) / (values.length - 1);
+            const y = yPad + usableHeight - (value / 100) * usableHeight;
+            return `${x},${y}`;
+          })
+          .join(" ");
+      }
+
+      function updateCoach() {
+        const coach = currentData().coach;
+        document.getElementById("goalSummary").textContent = coach.summary;
+        document.getElementById("lineTarget").setAttribute("points", toPolyline(coach.lines.target, 520, 220));
+        document
+          .getElementById("lineExpected")
+          .setAttribute("points", toPolyline(coach.lines.expected, 520, 220));
+        document.getElementById("lineActual").setAttribute("points", toPolyline(coach.lines.actual, 520, 220));
+        const maxValue = Math.max(...coach.waterfall.map((item) => item.value));
+        document.getElementById("waterfall").innerHTML = coach.waterfall
+          .map((row) => {
+            const width = Math.round((row.value / maxValue) * 100);
+            return `<div class="wf-row"><strong>${row.label}</strong><div class="wf-bar"><span style="width:${width}%"></span></div><span>${row.value}</span></div>`;
+          })
+          .join("");
+        document.getElementById("coachTierProgress").style.width = `${currentData().epsh.progress}%`;
+        document.getElementById("coachTierLabel").textContent = currentData().epsh.label;
+      }
+
+      function updateLiveStamp() {
+        const now = new Date();
+        const diffSeconds = Math.floor((now - state.lastUpdated) / 1000);
+        let text = "Updated just now";
+        if (diffSeconds >= 60) {
+          text = `Updated ${Math.floor(diffSeconds / 60)} min ago`;
+        } else if (diffSeconds >= 10) {
+          text = `Updated ${diffSeconds}s ago`;
+        }
+        document.getElementById("liveStamp").textContent = text;
+      }
+
+      function render() {
+        updateMetrics();
+        updateSecondary();
+        updatePacing();
+        updatePlannerRail();
+        updateCoach();
+        updateLiveStamp();
+      }
+
+      function activateInGroup(group, attr, value) {
+        group.querySelectorAll("button").forEach((btn) => {
+          btn.classList.toggle("is-active", btn.dataset[attr] === value);
+        });
+      }
+
+      function setupEvents() {
+        const modeToggle = document.getElementById("modeToggle");
+        modeToggle.addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-mode]");
+          if (!button) return;
+          state.mode = button.dataset.mode;
+          activateInGroup(modeToggle, "mode", state.mode);
+          state.lastUpdated = new Date();
+          render();
+        });
+
+        const periodToggle = document.getElementById("periodToggle");
+        periodToggle.addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-period]");
+          if (!button) return;
+          state.period = button.dataset.period;
+          activateInGroup(periodToggle, "period", state.period);
+          state.lastUpdated = new Date();
+          render();
+        });
+
+        const conceptNav = document.getElementById("conceptNav");
+        conceptNav.addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-concept]");
+          if (!button) return;
+          state.concept = button.dataset.concept;
+          conceptNav.querySelectorAll("button").forEach((item) => {
+            item.classList.toggle("is-active", item.dataset.concept === state.concept);
+          });
+          document.querySelectorAll(".concept").forEach((concept) => {
+            concept.classList.toggle("is-active", concept.id === state.concept);
+          });
+        });
+      }
+
+      function simulateLiveUpdates() {
+        const dayStore = dashboardData.store.day.core;
+        const dayDoctor = dashboardData.doctor.day.core;
+        if (dayStore.seenSoFar.actual < dayStore.examCount.target) {
+          dayStore.seenSoFar.actual += 1;
+          dayStore.examCount.actual += 1;
+          dayStore.remainingOnBooks.actual = Math.max(0, dayStore.remainingOnBooks.actual - 1);
+        }
+        if (dayDoctor.seenSoFar.actual < dayDoctor.examCount.target) {
+          dayDoctor.seenSoFar.actual += 1;
+          dayDoctor.examCount.actual += 1;
+          dayDoctor.remainingOnBooks.actual = Math.max(0, dayDoctor.remainingOnBooks.actual - 1);
+        }
+        state.lastUpdated = new Date();
+        render();
+      }
+
+      setupEvents();
+      render();
+      setInterval(updateLiveStamp, 1000);
+      setInterval(simulateLiveUpdates, 18000);
+    </script>
+  </body>
+</html>
