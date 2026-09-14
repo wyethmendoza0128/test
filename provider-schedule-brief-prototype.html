@@ -442,6 +442,50 @@
         padding: 5px;
         z-index: 6;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(28, 45, 81, 0.07);
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+
+      .appt-inner {
+        position: relative;
+        z-index: 4;
+      }
+
+      .appt.is-stack {
+        cursor: pointer;
+        overflow: visible;
+      }
+
+      .appt.is-stack:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(28, 45, 81, 0.18);
+      }
+
+      .stack-layer {
+        position: absolute;
+        border-radius: 7px;
+        border: 1px solid #d5def0;
+        border-left-width: 4px;
+        background: #fff;
+        z-index: 1;
+        pointer-events: none;
+        box-shadow: 0 2px 6px rgba(28, 45, 81, 0.12);
+      }
+
+      .stack-count-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        z-index: 7;
+        border-radius: 999px;
+        border: 1px solid #cad5ea;
+        background: #23345a;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1;
+        padding: 3px 6px;
+        box-shadow: 0 2px 6px rgba(28, 45, 81, 0.2);
       }
 
       .appt .line-one {
@@ -581,6 +625,119 @@
         display: none;
       }
 
+      .stack-popover-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 39;
+        background: rgba(12, 20, 38, 0.12);
+      }
+
+      .stack-popover {
+        position: fixed;
+        z-index: 40;
+        width: min(460px, calc(100vw - 20px));
+        max-height: min(460px, calc(100vh - 20px));
+        background: #fff;
+        border: 1px solid #cbd6ea;
+        border-radius: 10px;
+        box-shadow: 0 14px 28px rgba(18, 35, 68, 0.24);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stack-popover-header {
+        padding: 10px 12px 8px;
+        border-bottom: 1px solid #e3e9f4;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .stack-popover-header h4 {
+        margin: 0;
+        font-size: 13px;
+        color: #243457;
+      }
+
+      .stack-popover-header p {
+        margin: 3px 0 0;
+        font-size: 11px;
+        color: #5e6e8d;
+      }
+
+      .stack-popover-close {
+        border-radius: 7px;
+        width: 28px;
+        min-width: 28px;
+        padding: 0;
+      }
+
+      .stack-popover-list {
+        overflow: auto;
+        padding: 8px;
+      }
+
+      .stack-popover-item {
+        border: 1px solid #d8e0f0;
+        border-radius: 8px;
+        padding: 7px;
+        background: #fbfdff;
+      }
+
+      .stack-popover-item + .stack-popover-item {
+        margin-top: 7px;
+      }
+
+      .stack-popover-item-main {
+        width: 100%;
+        border: 0;
+        padding: 0;
+        height: auto;
+        background: transparent;
+        text-align: left;
+        color: inherit;
+      }
+
+      .stack-popover-item-main:hover {
+        border: 0;
+      }
+
+      .stack-popover-title-row {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+
+      .stack-popover-title-row strong {
+        font-size: 12px;
+        color: #233355;
+      }
+
+      .stack-popover-title-row small {
+        font-size: 10px;
+        color: #647393;
+      }
+
+      .stack-popover-meta {
+        margin-top: 3px;
+        font-size: 11px;
+        color: #516288;
+      }
+
+      .stack-popover-actions {
+        margin-top: 7px;
+        display: flex;
+        gap: 6px;
+      }
+
+      .stack-popover-actions button {
+        height: 24px;
+        font-size: 11px;
+        border-radius: 6px;
+      }
+
       .legend {
         margin-top: 8px;
         display: flex;
@@ -713,6 +870,18 @@
 
       <section class="schedule-grid" id="scheduleGrid"></section>
       <section class="empty-state" id="emptyState" hidden></section>
+
+      <div class="stack-popover-backdrop" id="stackPopoverBackdrop" hidden></div>
+      <aside class="stack-popover" id="stackPopover" hidden aria-label="Concurrent appointments popover">
+        <header class="stack-popover-header">
+          <div>
+            <h4 id="stackPopoverTitle"></h4>
+            <p id="stackPopoverMeta"></p>
+          </div>
+          <button type="button" class="stack-popover-close" id="stackPopoverClose" aria-label="Close popover">×</button>
+        </header>
+        <div class="stack-popover-list" id="stackPopoverList"></div>
+      </aside>
     </main>
 
     <script>
@@ -766,6 +935,13 @@
         completed: "Completed",
         prebooked: "Pre-booked",
         cancelled: "Cancelled"
+      };
+      const STATUS_PRIORITY = {
+        arrived: 0,
+        booked: 1,
+        prebooked: 2,
+        completed: 3,
+        cancelled: 4
       };
 
       const RETAIL_CATALOG = {
@@ -838,6 +1014,8 @@
                 appt("11:30", "12:00", "booked", "glasses", "H. Wolfe", "Comprehensive Exam", "Exam 1", "Minor"),
                 appt("12:40", "13:10", "arrived", "followup", "P. Snow", "Post-op Check", "Exam 1"),
                 appt("13:10", "13:45", "booked", "contact", "E. Ray", "Contact Trial Follow-up", "Exam 1"),
+                appt("13:10", "13:45", "arrived", "followup", "K. Marin", "Post-op Follow-up", "Exam 3"),
+                appt("13:10", "13:45", "booked", "glasses", "T. Brewer", "Routine Exam", "Exam 4"),
                 appt("13:45", "14:15", "booked", "glasses", "N. Verri", "Annual Vision Exam", "Exam 1"),
                 appt("14:15", "14:55", "completed", "glasses", "I. Gomez", "Comprehensive Exam", "Exam 1"),
                 appt("15:00", "15:35", "prebooked", "followup", "B. Choi", "Dry Eye Follow-up", "Exam 1"),
@@ -928,6 +1106,7 @@
                 appt("13:05", "13:40", "booked", "glasses", "V. Ito", "Comprehensive Exam", "Exam 4"),
                 appt("13:40", "14:10", "arrived", "followup", "H. Sellers", "Rx Check", "Exam 4"),
                 appt("14:10", "14:45", "booked", "glasses", "S. Cordova", "Annual Vision Exam", "Exam 4"),
+                appt("14:10", "14:45", "arrived", "contact", "J. Madden", "Contact Lens Check", "Exam 5"),
                 appt("14:45", "15:20", "booked", "contact", "G. Devkuaj", "Contact Lens Exam", "Exam 4"),
                 appt("15:20", "15:55", "booked", "glasses", "C. Marah", "Routine Exam", "Exam 4"),
                 appt("15:55", "16:30", "cancelled", "glasses", "M. Bowen", "Routine Exam", "Exam 4")
@@ -1129,7 +1308,16 @@
         retailUpdatedAt: "",
         retailLoading: false,
         simulateRetailFailure: false,
-        trimNotice: ""
+        trimNotice: "",
+        stackPopover: {
+          open: false,
+          anchorStackId: "",
+          appointments: [],
+          laneName: "",
+          storeName: "",
+          slotStart: "",
+          slotEnd: ""
+        }
       };
 
       const refs = {
@@ -1147,7 +1335,13 @@
         multiLocationCapMessage: document.getElementById("multiLocationCapMessage"),
         scheduleGrid: document.getElementById("scheduleGrid"),
         emptyState: document.getElementById("emptyState"),
-        metaHint: document.getElementById("metaHint")
+        metaHint: document.getElementById("metaHint"),
+        stackPopoverBackdrop: document.getElementById("stackPopoverBackdrop"),
+        stackPopover: document.getElementById("stackPopover"),
+        stackPopoverTitle: document.getElementById("stackPopoverTitle"),
+        stackPopoverMeta: document.getElementById("stackPopoverMeta"),
+        stackPopoverList: document.getElementById("stackPopoverList"),
+        stackPopoverClose: document.getElementById("stackPopoverClose")
       };
 
       function loadJson(key, fallbackValue) {
@@ -1342,6 +1536,83 @@
       function parseMinutes(value) {
         const parts = value.split(":").map(Number);
         return parts[0] * 60 + parts[1];
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function getDurationMinutes(start, end) {
+        return Math.max(0, parseMinutes(end) - parseMinutes(start));
+      }
+
+      function sortByStackPriority(items) {
+        return items.slice().sort((left, right) => {
+          const leftPriority = STATUS_PRIORITY[left.status] ?? 99;
+          const rightPriority = STATUS_PRIORITY[right.status] ?? 99;
+          if (leftPriority !== rightPriority) {
+            return leftPriority - rightPriority;
+          }
+          return left.patient.localeCompare(right.patient);
+        });
+      }
+
+      function groupAppointmentsByExactSlot(items) {
+        const bySlot = new Map();
+        items.forEach((item) => {
+          const key = item.start + "|" + item.end;
+          if (!bySlot.has(key)) {
+            bySlot.set(key, []);
+          }
+          bySlot.get(key).push(item);
+        });
+
+        return Array.from(bySlot.entries())
+          .map(([slotKey, appointments]) => ({
+            slotKey: slotKey,
+            appointments: sortByStackPriority(appointments)
+          }))
+          .sort((left, right) => {
+            const leftStart = parseMinutes(left.appointments[0].start);
+            const rightStart = parseMinutes(right.appointments[0].start);
+            if (leftStart !== rightStart) {
+              return leftStart - rightStart;
+            }
+            const leftEnd = parseMinutes(left.appointments[0].end);
+            const rightEnd = parseMinutes(right.appointments[0].end);
+            return leftEnd - rightEnd;
+          });
+      }
+
+      function getAppointmentCardHtml(item) {
+        return (
+          '<div class="appt-inner">' +
+          '<div class="line-one"><span class="badge">' +
+          item.type.toUpperCase() +
+          "</span><small>" +
+          item.start +
+          "-" +
+          item.end +
+          "</small></div>" +
+          "<h4>" +
+          escapeHtml(item.title) +
+          "</h4>" +
+          "<p>" +
+          escapeHtml(item.patient) +
+          "</p>" +
+          '<div class="meta">' +
+          STATUS_LABELS[item.status] +
+          " · " +
+          escapeHtml(item.room) +
+          "</div>" +
+          (item.flag ? '<span class="flag">' + escapeHtml(item.flag.toUpperCase()) + "</span>" : "") +
+          "</div>"
+        );
       }
 
       function toClock(minutes) {
@@ -1564,7 +1835,132 @@
         return ((minute - cfg.dayStart) / (cfg.dayEnd - cfg.dayStart)) * cfg.boardHeight;
       }
 
+      function closeStackPopover() {
+        state.stackPopover.open = false;
+        state.stackPopover.anchorStackId = "";
+        state.stackPopover.appointments = [];
+        refs.stackPopoverBackdrop.hidden = true;
+        refs.stackPopover.hidden = true;
+        refs.stackPopoverList.innerHTML = "";
+      }
+
+      function repositionStackPopover() {
+        if (!state.stackPopover.open || !state.stackPopover.anchorStackId) {
+          return;
+        }
+        const anchor = document.querySelector('[data-stack-id="' + state.stackPopover.anchorStackId + '"]');
+        if (!anchor) {
+          closeStackPopover();
+          return;
+        }
+
+        const anchorRect = anchor.getBoundingClientRect();
+        const popoverRect = refs.stackPopover.getBoundingClientRect();
+        const margin = 10;
+        let left = anchorRect.right + 10;
+        if (left + popoverRect.width > window.innerWidth - margin) {
+          left = anchorRect.left - popoverRect.width - 10;
+        }
+        left = Math.max(margin, Math.min(left, window.innerWidth - popoverRect.width - margin));
+
+        let top = anchorRect.top;
+        if (top + popoverRect.height > window.innerHeight - margin) {
+          top = window.innerHeight - popoverRect.height - margin;
+        }
+        top = Math.max(margin, top);
+
+        refs.stackPopover.style.left = left + "px";
+        refs.stackPopover.style.top = top + "px";
+      }
+
+      function renderStackPopover() {
+        if (!state.stackPopover.open) {
+          closeStackPopover();
+          return;
+        }
+
+        const items = state.stackPopover.appointments;
+        refs.stackPopoverTitle.textContent = "+" + items.length + " concurrent appointments";
+        refs.stackPopoverMeta.textContent =
+          state.stackPopover.slotStart +
+          "-" +
+          state.stackPopover.slotEnd +
+          " · " +
+          state.stackPopover.laneName +
+          " · " +
+          state.stackPopover.storeName;
+
+        refs.stackPopoverList.innerHTML = items
+          .map((item, index) => {
+            const duration = getDurationMinutes(item.start, item.end);
+            return (
+              '<article class="stack-popover-item">' +
+              '<button type="button" class="stack-popover-item-main" data-popover-action="select" data-item-index="' +
+              index +
+              '">' +
+              '<div class="stack-popover-title-row"><strong>' +
+              escapeHtml(item.title) +
+              "</strong><small>" +
+              item.start +
+              "-" +
+              item.end +
+              " · " +
+              duration +
+              " min</small></div>" +
+              '<div class="stack-popover-meta">Attendees: ' +
+              escapeHtml(item.patient) +
+              ", " +
+              escapeHtml(state.stackPopover.laneName) +
+              "</div>" +
+              '<div class="stack-popover-meta">Location: ' +
+              escapeHtml(state.stackPopover.storeName) +
+              " · " +
+              escapeHtml(item.room) +
+              "</div>" +
+              '<div class="stack-popover-meta">Status: ' +
+              escapeHtml(STATUS_LABELS[item.status]) +
+              "</div>" +
+              "</button>" +
+              '<div class="stack-popover-actions">' +
+              '<button type="button" data-popover-action="view" data-item-index="' +
+              index +
+              '">View</button>' +
+              '<button type="button" data-popover-action="edit" data-item-index="' +
+              index +
+              '">Edit</button>' +
+              '<button type="button" data-popover-action="delete" data-item-index="' +
+              index +
+              '">Delete</button>' +
+              "</div>" +
+              "</article>"
+            );
+          })
+          .join("");
+
+        refs.stackPopoverBackdrop.hidden = false;
+        refs.stackPopover.hidden = false;
+        repositionStackPopover();
+      }
+
+      function openStackPopover(stackId, appointments, lane, store, isCombined) {
+        if (state.stackPopover.open && state.stackPopover.anchorStackId === stackId) {
+          closeStackPopover();
+          return;
+        }
+
+        state.stackPopover.open = true;
+        state.stackPopover.anchorStackId = stackId;
+        state.stackPopover.appointments = appointments.slice();
+        state.stackPopover.laneName = lane.doctorName;
+        state.stackPopover.storeName = isCombined ? lane.locationTag || store.storeName : store.storeName;
+        state.stackPopover.slotStart = appointments[0].start;
+        state.stackPopover.slotEnd = appointments[0].end;
+
+        renderStackPopover();
+      }
+
       function renderScheduleBoards() {
+        closeStackPopover();
         refs.scheduleGrid.innerHTML = "";
         refs.emptyState.hidden = true;
         refs.scheduleGrid.classList.toggle("side-by-side", state.layout === "side-by-side");
@@ -1775,35 +2171,48 @@
         });
 
         const visibleAppointments = lane.appointments.filter((item) => !!state.statusVisibility[item.status]);
-        visibleAppointments.forEach((item) => {
-          const start = parseMinutes(item.start);
-          const end = parseMinutes(item.end);
+        const appointmentGroups = groupAppointmentsByExactSlot(visibleAppointments);
+        appointmentGroups.forEach((group) => {
+          const topAppointment = group.appointments[0];
+          const start = parseMinutes(topAppointment.start);
+          const end = parseMinutes(topAppointment.end);
           const top = minuteToTop(start, cfg);
           const height = Math.max(minuteToTop(end, cfg) - top, cfg.minCardHeight);
           const card = document.createElement("section");
-          card.className = "appt status-" + item.status + " type-" + item.type;
+          card.className = "appt status-" + topAppointment.status + " type-" + topAppointment.type;
           card.style.top = top + "px";
           card.style.height = height + "px";
-          card.innerHTML =
-            '<div class="line-one"><span class="badge">' +
-            item.type.toUpperCase() +
-            "</span><small>" +
-            item.start +
-            "-" +
-            item.end +
-            "</small></div>" +
-            "<h4>" +
-            item.title +
-            "</h4>" +
-            "<p>" +
-            item.patient +
-            "</p>" +
-            '<div class="meta">' +
-            STATUS_LABELS[item.status] +
-            " · " +
-            item.room +
-            "</div>" +
-            (item.flag ? '<span class="flag">' + item.flag.toUpperCase() + "</span>" : "");
+          card.innerHTML = getAppointmentCardHtml(topAppointment);
+
+          if (group.appointments.length > 1) {
+            card.classList.add("is-stack");
+            const stackId = lane.laneId + "::" + group.slotKey;
+            card.dataset.stackId = stackId;
+
+            const maxVisibleLayers = Math.min(group.appointments.length - 1, 3);
+            for (let depth = maxVisibleLayers; depth >= 1; depth -= 1) {
+              const layerSource = group.appointments[Math.min(depth, group.appointments.length - 1)];
+              const offset = depth * 4;
+              const layer = document.createElement("div");
+              layer.className = "stack-layer status-" + layerSource.status + " type-" + layerSource.type;
+              layer.style.top = offset + "px";
+              layer.style.left = offset + "px";
+              layer.style.right = -offset + "px";
+              layer.style.bottom = -offset + "px";
+              card.appendChild(layer);
+            }
+
+            const badge = document.createElement("span");
+            badge.className = "stack-count-badge";
+            badge.textContent = "+" + group.appointments.length;
+            card.appendChild(badge);
+
+            card.addEventListener("click", (event) => {
+              event.stopPropagation();
+              openStackPopover(stackId, group.appointments, lane, store, isCombined);
+            });
+          }
+
           body.appendChild(card);
         });
 
@@ -1996,6 +2405,62 @@
           ensureScopeSelections();
           renderAll();
         });
+
+        refs.stackPopoverBackdrop.addEventListener("click", () => {
+          closeStackPopover();
+        });
+
+        refs.stackPopoverClose.addEventListener("click", () => {
+          closeStackPopover();
+        });
+
+        refs.stackPopoverList.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) {
+            return;
+          }
+          const actionTarget = target.closest("button[data-popover-action]");
+          if (!actionTarget) {
+            return;
+          }
+          const index = Number(actionTarget.dataset.itemIndex);
+          const selected = state.stackPopover.appointments[index];
+          if (selected) {
+            refs.metaHint.textContent =
+              "Selected " +
+              selected.patient +
+              " (" +
+              selected.start +
+              "-" +
+              selected.end +
+              ") · " +
+              actionTarget.dataset.popoverAction.toUpperCase() +
+              " action";
+          }
+          closeStackPopover();
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && state.stackPopover.open) {
+            closeStackPopover();
+          }
+        });
+
+        window.addEventListener("resize", () => {
+          if (state.stackPopover.open) {
+            repositionStackPopover();
+          }
+        });
+
+        window.addEventListener(
+          "scroll",
+          () => {
+            if (state.stackPopover.open) {
+              repositionStackPopover();
+            }
+          },
+          true
+        );
       }
 
       async function init() {
