@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exam Rooms - Day Schedule</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>Exam Rooms · Day Schedule</h1>
+          <p>Both 4 columns</p>
+        </div>
+        <p class="hint">Scanning the full day - no scrolling</p>
+      </header>
+
+      <section class="toolbar">
+        <div class="left-controls">
+          <button aria-label="Previous day" class="icon-btn">&lt;</button>
+          <button class="pill strong">Sep 10, 2025</button>
+          <button class="pill">Layout</button>
+          <button class="pill selected">Scan</button>
+          <button class="pill">Detail</button>
+          <button class="pill subtle">Density</button>
+          <button class="pill">Compact</button>
+          <button class="pill">Cozy</button>
+          <button class="pill selected">Shift overlay</button>
+        </div>
+
+        <div class="status-group">
+          <span class="status-label">Status</span>
+          <span class="status-chip booked">Booked</span>
+          <span class="status-chip arrived">Arrived</span>
+          <span class="status-chip completed">Completed</span>
+          <span class="status-chip prebooked">Pre-booked</span>
+          <span class="status-chip cancelled">Cancelled</span>
+        </div>
+      </section>
+
+      <section class="schedule-board" id="schedule-board">
+        <aside class="time-rail" id="time-rail"></aside>
+        <div class="room-columns" id="room-columns"></div>
+      </section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>
