@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EHR Appointment View / Schedule Redesign Prototype</title>
+    <style>
+      :root {
+        --page-bg: #f2f5fb;
+        --panel-bg: #ffffff;
+        --line: #d8deea;
+        --line-soft: #e8edf5;
+        --text: #27324a;
+        --muted: #6f7f9e;
+        --accent: #2772c9;
+        --success: #278a64;
+        --warn: #b06812;
+        --danger: #ba4858;
+        --radius: 10px;
+        --shadow: 0 1px 0 rgba(20, 36, 78, 0.06);
+        --dense-board-height: 560px;
+        --cozy-board-height: 760px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+        color: var(--text);
+        background: var(--page-bg);
+      }
+
+      .app {
+        max-width: 1700px;
+        margin: 0 auto;
+        padding: 12px;
+      }
+
+      .page-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .page-title h1 {
+        margin: 0;
+        font-size: 19px;
+      }
+
+      .page-title p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .meta-hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .panel {
+        margin-top: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel-bg);
+        box-shadow: var(--shadow);
+        padding: 10px;
+      }
+
+      .panel h2 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #4d5d80;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .row + .row {
+        margin-top: 8px;
+      }
+
+      .field {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 12px;
+        color: #516185;
+        font-weight: 600;
+      }
+
+      select,
+      button,
+      .chip-toggle,
+      .switch,
+      .segmented button {
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid #cfd8ea;
+        background: #fff;
+        color: #3f4f74;
+        font-size: 12px;
+      }
+
+      select {
+        min-width: 170px;
+        padding: 0 8px;
+      }
+
+      button {
+        padding: 0 10px;
+        font-weight: 600;
+      }
+
+      button:hover {
+        cursor: pointer;
+        border-color: #b6c3de;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 9px;
+      }
+
+      .switch input {
+        margin: 0;
+      }
+
+      .segmented {
+        display: inline-flex;
+        border: 1px solid #ccd6e8;
+        border-radius: 9px;
+        overflow: hidden;
+      }
+
+      .segmented button {
+        border: 0;
+        border-right: 1px solid #d6deed;
+        border-radius: 0;
+        min-width: 82px;
+      }
+
+      .segmented button:last-child {
+        border-right: 0;
+      }
+
+      .segmented .active {
+        background: #e9f4ff;
+        color: #1f5f9d;
+      }
+
+      .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .chip-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 9px;
+        border-radius: 999px;
+      }
+
+      .chip-toggle::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .chip-toggle[data-status="booked"] {
+        color: #2b4f9f;
+      }
+
+      .chip-toggle[data-status="arrived"] {
+        color: #2e78b0;
+      }
+
+      .chip-toggle[data-status="completed"] {
+        color: #23865d;
+      }
+
+      .chip-toggle[data-status="prebooked"] {
+        color: #8657c3;
+      }
+
+      .chip-toggle[data-status="cancelled"] {
+        color: #b74956;
+      }
+
+      .chip-toggle.off {
+        background: #f4f7fb;
+        color: #8896b1;
+        border-color: #dde4f2;
+      }
+
+      .scope-note {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: #5d6d8c;
+      }
+
+      .scope-note.warning {
+        color: #95600d;
+      }
+
+      .scope-note.error {
+        color: var(--danger);
+      }
+
+      .scope-note.success {
+        color: var(--success);
+      }
+
+      .locations-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 6px;
+      }
+
+      .location-option {
+        border: 1px solid #d8e1f0;
+        border-radius: 8px;
+        padding: 7px 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        background: #fbfcff;
+      }
+
+      .location-option span {
+        font-size: 12px;
+      }
+
+      .location-option small {
+        display: block;
+        color: #6f7d98;
+        font-size: 11px;
+      }
+
+      .schedule-grid {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .schedule-grid.side-by-side {
+        grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      }
+
+      .store-board {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 11px;
+        overflow: hidden;
+      }
+
+      .store-board-header {
+        border-bottom: 1px solid var(--line);
+        background: #fbfdff;
+        padding: 8px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .store-board-header h3 {
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .store-board-header p {
+        margin: 2px 0 0;
+        font-size: 11px;
+        color: #6e7d99;
+      }
+
+      .upcoming {
+        max-width: 56%;
+        text-align: right;
+        font-size: 11px;
+        color: #58688c;
+      }
+
+      .upcoming strong {
+        color: #2a3a5d;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: 66px 1fr;
+      }
+
+      .time-rail {
+        position: relative;
+        border-right: 1px solid var(--line);
+        background: #f7f9fd;
+      }
+
+      .time-label {
+        position: absolute;
+        left: 5px;
+        transform: translateY(-50%);
+        font-size: 10px;
+        color: #7282a0;
+      }
+
+      .lanes {
+        display: grid;
+      }
+
+      .lane {
+        border-right: 1px solid var(--line-soft);
+        position: relative;
+        min-width: 240px;
+      }
+
+      .lane:last-child {
+        border-right: 0;
+      }
+
+      .lane-header {
+        height: 56px;
+        border-bottom: 1px solid var(--line);
+        background: #fdfefe;
+        padding: 7px 8px;
+        position: sticky;
+        top: 0;
+        z-index: 14;
+      }
+
+      .lane-header strong {
+        display: block;
+        font-size: 12px;
+        color: #233251;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .lane-header span {
+        display: block;
+        margin-top: 2px;
+        font-size: 10px;
+        color: #647494;
+      }
+
+      .lane-body {
+        position: relative;
+      }
+
+      .hour-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 1px solid #edf1f8;
+        z-index: 1;
+      }
+
+      .shift-block {
+        position: absolute;
+        border: 1px solid #d6e5ff;
+        background: #f2f8ff;
+        border-radius: 9px;
+        z-index: 2;
+        overflow: hidden;
+      }
+
+      .shift-block::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: var(--lane-color, #8ea7ce);
+      }
+
+      .shift-label-inline {
+        position: absolute;
+        left: 12px;
+        top: 7px;
+        right: 7px;
+        font-size: 10px;
+        color: #41577d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .availability-block {
+        position: absolute;
+        left: 12px;
+        right: 4px;
+        border: 1px dashed #b8d9cc;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(57, 136, 105, 0.13) 0,
+          rgba(57, 136, 105, 0.13) 6px,
+          rgba(57, 136, 105, 0.03) 6px,
+          rgba(57, 136, 105, 0.03) 12px
+        );
+        border-radius: 7px;
+        z-index: 3;
+      }
+
+      .appt {
+        position: absolute;
+        left: 16px;
+        right: 5px;
+        border-radius: 7px;
+        border: 1px solid #d5def0;
+        border-left-width: 4px;
+        background: #fff;
+        padding: 5px;
+        z-index: 6;
+        overflow: hidden;
+      }
+
+      .appt .line-one {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .appt .line-one small {
+        font-size: 9px;
+        color: #7d8ba6;
+      }
+
+      .appt .line-one .badge {
+        font-size: 9px;
+        border-radius: 999px;
+        padding: 1px 5px;
+        border: 1px solid #d7e0ef;
+        background: #f8fbff;
+        color: #5e6d8d;
+        font-weight: 700;
+      }
+
+      .appt h4 {
+        margin: 3px 0 0;
+        font-size: 10px;
+        line-height: 1.2;
+        color: #30415f;
+      }
+
+      .appt p {
+        margin: 2px 0 0;
+        font-size: 10px;
+        color: #223250;
+      }
+
+      .appt .meta {
+        margin-top: 3px;
+        font-size: 9px;
+        color: #7483a3;
+      }
+
+      .appt .flag {
+        margin-top: 3px;
+        display: inline-block;
+        font-size: 8px;
+        border-radius: 999px;
+        padding: 1px 5px;
+        border: 1px solid #efcfb0;
+        background: #fff4e8;
+        color: #9f611f;
+        font-weight: 700;
+      }
+
+      .status-booked {
+        border-left-color: #3459a5;
+      }
+
+      .status-arrived {
+        border-left-color: #2f7eae;
+      }
+
+      .status-completed {
+        border-left-color: #2f8e66;
+      }
+
+      .status-prebooked {
+        border-left-color: #8654c4;
+      }
+
+      .status-cancelled {
+        border-left-color: #ba4858;
+        opacity: 0.75;
+      }
+
+      .type-glasses .badge {
+        background: #f4efff;
+        color: #6042a4;
+      }
+
+      .type-contact .badge {
+        background: #eaf6ff;
+        color: #2b6ea2;
+      }
+
+      .type-followup .badge {
+        background: #eef8ef;
+        color: #2a8558;
+      }
+
+      .type-pretest .badge {
+        background: #fff6eb;
+        color: #9a6122;
+      }
+
+      .now-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 2px solid #ea545a;
+        z-index: 12;
+      }
+
+      .now-line::after {
+        content: attr(data-label);
+        position: absolute;
+        right: 3px;
+        top: -7px;
+        font-size: 9px;
+        line-height: 1;
+        background: #ea545a;
+        color: #fff;
+        padding: 2px 4px;
+        border-radius: 5px;
+      }
+
+      .compact .lane-header {
+        height: 50px;
+      }
+
+      .compact .lane-header strong {
+        font-size: 11px;
+      }
+
+      .compact .lane-header span {
+        font-size: 9px;
+      }
+
+      .compact .appt h4 {
+        font-size: 9px;
+      }
+
+      .compact .appt p,
+      .compact .appt .meta,
+      .compact .appt .flag {
+        display: none;
+      }
+
+      .legend {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 11px;
+        color: #5e6e8d;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .legend-box {
+        width: 14px;
+        height: 10px;
+        border-radius: 3px;
+      }
+
+      .legend-box.shift {
+        background: #f2f8ff;
+        border: 1px solid #cfe0fb;
+      }
+
+      .legend-box.available {
+        border: 1px dashed #b8d9cc;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(57, 136, 105, 0.13) 0,
+          rgba(57, 136, 105, 0.13) 6px,
+          rgba(57, 136, 105, 0.03) 6px,
+          rgba(57, 136, 105, 0.03) 12px
+        );
+      }
+
+      .empty-state {
+        margin-top: 10px;
+        border: 1px dashed #cad5e8;
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        background: #fbfdff;
+        color: #617394;
+        font-size: 13px;
+      }
+
+      @media (max-width: 1100px) {
+        .schedule-grid.side-by-side {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="page-title">
+        <div>
+          <h1>EHR Appointment View / Schedule Redesign Prototype</h1>
+          <p>
+            Includes pretest-room visibility preference, role-based scope filters, explicit
+            availability shading, density modes, and multi-location layouts.
+          </p>
+        </div>
+        <p class="meta-hint" id="metaHint"></p>
+      </header>
+
+      <section class="panel" id="globalControlsPanel">
+        <h2>Display + Status Controls</h2>
+        <div class="row">
+          <div class="field">
+            <label for="roleSelect">User Role</label>
+            <select id="roleSelect"></select>
+          </div>
+
+          <div class="field">
+            <label>Density</label>
+            <div class="segmented" id="densityToggle">
+              <button type="button" data-density="compact">Compact</button>
+              <button type="button" data-density="cozy">Cozy</button>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" id="showPretestToggle" />
+            Show pretest room
+          </label>
+        </div>
+
+        <div class="row">
+          <span style="font-size: 12px; font-weight: 600; color: #516185">Status filters</span>
+          <div class="chip-list" id="statusChips"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Retail API Scope Filter (Role-Gated)</h2>
+        <div class="row">
+          <label class="switch">
+            <input type="checkbox" id="simulateApiFailureToggle" />
+            Simulate Retail API outage
+          </label>
+          <button type="button" id="refreshRetailButton">Refresh scope data</button>
+          <span class="scope-note" id="apiStatusMessage"></span>
+        </div>
+        <div class="row" id="scopeFiltersRow"></div>
+        <p class="scope-note" id="scopePermissionNote"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Multi-Location View</h2>
+        <div class="row">
+          <div class="field">
+            <label>Layout</label>
+            <div class="segmented" id="layoutToggle">
+              <button type="button" data-layout="side-by-side">Side by side</button>
+              <button type="button" data-layout="combined">Combined timeline</button>
+            </div>
+          </div>
+          <span class="scope-note" id="multiLocationCapMessage"></span>
+        </div>
+        <div class="locations-list" id="multiLocationList"></div>
+      </section>
+
+      <section class="legend">
+        <span class="legend-item"><span class="legend-box shift"></span> Shift coverage</span>
+        <span class="legend-item"><span class="legend-box available"></span> Explicit available time (independent of status filter visibility)</span>
+      </section>
+
+      <section class="schedule-grid" id="scheduleGrid"></section>
+      <section class="empty-state" id="emptyState" hidden></section>
+    </main>
+
+    <script>
+      const STORAGE_KEYS = {
+        role: "ux-nav-role",
+        density: "ux-nav-density",
+        showPretest: "ux-nav-show-pretest",
+        statusVisibility: "ux-nav-status-visibility",
+        layout: "ux-nav-layout",
+        selectedRegionId: "ux-nav-region",
+        selectedDistrictId: "ux-nav-district",
+        selectedStoreId: "ux-nav-store",
+        selectedLocationIds: "ux-nav-selected-locations",
+        retailCache: "ux-nav-retail-cache"
+      };
+
+      const ALL_ROLES = [
+        "Scheduler",
+        "Doctor",
+        "OD Leader",
+        "HQ Ops",
+        "Product",
+        "Software Engineer",
+        "Contractor"
+      ];
+
+      const ROLE_HOME_STORE = {
+        Scheduler: "st-seattle",
+        Doctor: "st-seattle",
+        "OD Leader": "st-seattle",
+        "HQ Ops": "st-atlanta",
+        Product: "st-nyc",
+        "Software Engineer": "st-sf",
+        Contractor: "st-boston"
+      };
+
+      const SCOPE_ALLOWED_ROLES = new Set([
+        "OD Leader",
+        "HQ Ops",
+        "Product",
+        "Software Engineer",
+        "Contractor"
+      ]);
+
+      const STATUS_ORDER = ["booked", "arrived", "completed", "prebooked", "cancelled"];
+      const OCCUPYING_STATUSES = new Set(["booked", "arrived", "completed", "prebooked"]);
+
+      const STATUS_LABELS = {
+        booked: "Booked",
+        arrived: "Arrived",
+        completed: "Completed",
+        prebooked: "Pre-booked",
+        cancelled: "Cancelled"
+      };
+
+      const RETAIL_CATALOG = {
+        updatedAt: "2026-09-14T14:55:00Z",
+        regions: [
+          {
+            id: "reg-west",
+            name: "West Region",
+            districts: [
+              {
+                id: "dist-pnw",
+                name: "PNW District",
+                stores: [
+                  { id: "st-seattle", name: "Seattle Market / Store 101", timeZone: "America/Los_Angeles" },
+                  { id: "st-sf", name: "San Francisco Market / Store 206", timeZone: "America/Los_Angeles" }
+                ]
+              },
+              {
+                id: "dist-sw",
+                name: "Southwest District",
+                stores: [
+                  { id: "st-phx", name: "Phoenix Market / Store 330", timeZone: "America/Phoenix" }
+                ]
+              }
+            ]
+          },
+          {
+            id: "reg-east",
+            name: "East Region",
+            districts: [
+              {
+                id: "dist-ny",
+                name: "Metro East District",
+                stores: [
+                  { id: "st-nyc", name: "NYC Market / Store 411", timeZone: "America/New_York" },
+                  { id: "st-boston", name: "Boston Market / Store 522", timeZone: "America/New_York" }
+                ]
+              },
+              {
+                id: "dist-south",
+                name: "Southeast District",
+                stores: [
+                  { id: "st-atlanta", name: "Atlanta Market / Store 610", timeZone: "America/New_York" }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+
+      const SCHEDULES = {
+        "st-seattle": {
+          storeId: "st-seattle",
+          storeName: "Seattle Market / Store 101",
+          timeZone: "America/Los_Angeles",
+          lanes: [
+            {
+              laneId: "sea-dr-avery",
+              laneType: "doctor",
+              doctorName: "Dr. Avery Furrani",
+              color: "#5d76b7",
+              shift: { start: "08:00", end: "16:30" },
+              appointments: [
+                appt("08:00", "08:30", "booked", "glasses", "L. Jackson", "Annual Vision Exam", "Exam 1"),
+                appt("08:30", "09:00", "arrived", "contact", "R. Beal", "Contact Fit Follow-up", "Exam 1"),
+                appt("09:00", "09:40", "completed", "glasses", "D. Kruger", "Glasses + Dilation", "Exam 1"),
+                appt("09:45", "10:15", "booked", "followup", "A. Rios", "Rx Recheck", "Exam 1"),
+                appt("10:20", "10:50", "prebooked", "contact", "S. Gold", "Contact Lens Evaluation", "Exam 1"),
+                appt("11:00", "11:25", "cancelled", "glasses", "M. Bell", "Routine Exam", "Exam 1"),
+                appt("11:30", "12:00", "booked", "glasses", "H. Wolfe", "Comprehensive Exam", "Exam 1", "Minor"),
+                appt("12:40", "13:10", "arrived", "followup", "P. Snow", "Post-op Check", "Exam 1"),
+                appt("13:10", "13:45", "booked", "contact", "E. Ray", "Contact Trial Follow-up", "Exam 1"),
+                appt("13:45", "14:15", "booked", "glasses", "N. Verri", "Annual Vision Exam", "Exam 1"),
+                appt("14:15", "14:55", "completed", "glasses", "I. Gomez", "Comprehensive Exam", "Exam 1"),
+                appt("15:00", "15:35", "prebooked", "followup", "B. Choi", "Dry Eye Follow-up", "Exam 1"),
+                appt("15:35", "16:10", "booked", "glasses", "W. Frazier", "Exam + Refraction", "Exam 1")
+              ]
+            },
+            {
+              laneId: "sea-dr-simms",
+              laneType: "doctor",
+              doctorName: "Dr. Paula Simms",
+              color: "#5d9ab7",
+              shift: { start: "08:30", end: "18:00" },
+              appointments: [
+                appt("08:35", "09:10", "arrived", "glasses", "G. Okafor", "Glasses & Contacts", "Exam 2"),
+                appt("09:10", "09:45", "booked", "contact", "N. Shah", "Contact Lens Progress", "Exam 2"),
+                appt("09:45", "10:20", "booked", "glasses", "A. Park", "Diabetic Eye Exam", "Exam 2"),
+                appt("10:20", "10:55", "completed", "glasses", "R. Quinn", "Annual Exam", "Exam 2"),
+                appt("11:00", "11:35", "booked", "followup", "M. Hall", "Post-op Follow-up", "Exam 2"),
+                appt("11:35", "12:10", "booked", "contact", "T. Nair", "Contact Lens Exam", "Exam 2"),
+                appt("12:10", "12:45", "cancelled", "glasses", "J. Swann", "Routine Exam", "Exam 2"),
+                appt("12:50", "13:25", "booked", "glasses", "H. Ruiz", "Comprehensive Exam", "Exam 2", "Older Adult"),
+                appt("13:25", "13:55", "arrived", "followup", "P. Trent", "IOP Recheck", "Exam 2"),
+                appt("14:00", "14:30", "booked", "contact", "V. Lian", "Contact Lens Exam", "Exam 2"),
+                appt("14:35", "15:10", "prebooked", "glasses", "A. Freidin", "Exam + Refraction", "Exam 2"),
+                appt("15:10", "15:45", "booked", "glasses", "M. Felone", "Glasses Exam", "Exam 2"),
+                appt("16:00", "16:35", "booked", "followup", "J. Vance", "Pediatric Follow-up", "Exam 2")
+              ]
+            },
+            {
+              laneId: "sea-pretest",
+              laneType: "pretest",
+              doctorName: "Pretest Room",
+              color: "#a78545",
+              shift: { start: "08:00", end: "17:30" },
+              appointments: [
+                appt("08:10", "08:20", "booked", "pretest", "R. Beal", "Autorefraction", "Pretest"),
+                appt("08:50", "09:00", "completed", "pretest", "D. Kruger", "OCT", "Pretest"),
+                appt("09:30", "09:40", "booked", "pretest", "A. Rios", "NCT", "Pretest"),
+                appt("10:00", "10:15", "arrived", "pretest", "S. Gold", "Visual Field", "Pretest"),
+                appt("11:35", "11:50", "booked", "pretest", "H. Wolfe", "Retinal Photo", "Pretest"),
+                appt("13:12", "13:25", "booked", "pretest", "E. Ray", "Visual Acuity", "Pretest"),
+                appt("14:18", "14:30", "booked", "pretest", "I. Gomez", "Autorefraction", "Pretest")
+              ]
+            }
+          ]
+        },
+        "st-sf": {
+          storeId: "st-sf",
+          storeName: "San Francisco Market / Store 206",
+          timeZone: "America/Los_Angeles",
+          lanes: [
+            {
+              laneId: "sf-dr-blake",
+              laneType: "doctor",
+              doctorName: "Dr. Devon Blake",
+              color: "#6f6ac2",
+              shift: { start: "07:45", end: "16:15" },
+              appointments: [
+                appt("08:00", "08:35", "booked", "glasses", "C. Vasquez", "Comprehensive Exam", "Exam 3"),
+                appt("08:35", "09:10", "booked", "contact", "P. Nair", "Contact Lens Exam", "Exam 3"),
+                appt("09:10", "09:45", "completed", "glasses", "L. Cruz", "Routine Exam", "Exam 3"),
+                appt("09:45", "10:20", "arrived", "followup", "C. Pryor", "Medical Follow-up", "Exam 3"),
+                appt("10:20", "10:55", "booked", "glasses", "J. Benn", "Annual Vision Exam", "Exam 3"),
+                appt("11:00", "11:35", "prebooked", "contact", "I. Soto", "Contact Follow-up", "Exam 3"),
+                appt("11:35", "12:05", "booked", "followup", "H. Sato", "Post-op Follow-up", "Exam 3"),
+                appt("12:35", "13:10", "booked", "glasses", "S. Ramirez", "Comprehensive Exam", "Exam 3"),
+                appt("13:10", "13:40", "booked", "glasses", "T. Doolley", "Routine Exam", "Exam 3"),
+                appt("13:40", "14:10", "completed", "glasses", "N. Farr", "Routine Exam", "Exam 3"),
+                appt("14:10", "14:45", "cancelled", "contact", "C. Reyes", "Contact Lens Fit", "Exam 3"),
+                appt("14:50", "15:25", "booked", "glasses", "P. Ono", "Glasses Exam", "Exam 3"),
+                appt("15:25", "16:05", "booked", "followup", "T. Boyle", "IOP Follow-up", "Exam 3")
+              ]
+            },
+            {
+              laneId: "sf-dr-kraft",
+              laneType: "doctor",
+              doctorName: "Dr. Simone Kraft",
+              color: "#3d8ebf",
+              shift: { start: "08:30", end: "17:45" },
+              appointments: [
+                appt("08:35", "09:05", "booked", "glasses", "G. Pace", "Comprehensive Exam", "Exam 4"),
+                appt("09:05", "09:35", "arrived", "contact", "C. Matias", "Contact Lens Exam", "Exam 4"),
+                appt("09:35", "10:10", "booked", "glasses", "S. Fredericks", "Annual Exam", "Exam 4", "Older Adult"),
+                appt("10:10", "10:40", "completed", "glasses", "R. Monroe", "Routine Exam", "Exam 4"),
+                appt("10:40", "11:15", "booked", "followup", "E. Fox", "Medical Follow-up", "Exam 4"),
+                appt("11:15", "11:45", "booked", "contact", "B. Monaco", "Contact Follow-up", "Exam 4"),
+                appt("12:30", "13:05", "prebooked", "glasses", "K. Gray", "Exam + Refraction", "Exam 4"),
+                appt("13:05", "13:40", "booked", "glasses", "V. Ito", "Comprehensive Exam", "Exam 4"),
+                appt("13:40", "14:10", "arrived", "followup", "H. Sellers", "Rx Check", "Exam 4"),
+                appt("14:10", "14:45", "booked", "glasses", "S. Cordova", "Annual Vision Exam", "Exam 4"),
+                appt("14:45", "15:20", "booked", "contact", "G. Devkuaj", "Contact Lens Exam", "Exam 4"),
+                appt("15:20", "15:55", "booked", "glasses", "C. Marah", "Routine Exam", "Exam 4"),
+                appt("15:55", "16:30", "cancelled", "glasses", "M. Bowen", "Routine Exam", "Exam 4")
+              ]
+            },
+            {
+              laneId: "sf-pretest",
+              laneType: "pretest",
+              doctorName: "Pretest Room",
+              color: "#ab8a4d",
+              shift: { start: "08:00", end: "17:00" },
+              appointments: [
+                appt("08:35", "08:45", "booked", "pretest", "G. Pace", "Autorefraction", "Pretest"),
+                appt("09:10", "09:20", "completed", "pretest", "C. Matias", "Visual Field", "Pretest"),
+                appt("10:45", "10:55", "booked", "pretest", "E. Fox", "NCT", "Pretest"),
+                appt("13:07", "13:17", "booked", "pretest", "K. Gray", "Retinal Photo", "Pretest")
+              ]
+            }
+          ]
+        },
+        "st-phx": {
+          storeId: "st-phx",
+          storeName: "Phoenix Market / Store 330",
+          timeZone: "America/Phoenix",
+          lanes: [
+            {
+              laneId: "phx-dr-jones",
+              laneType: "doctor",
+              doctorName: "Dr. Tia Jones",
+              color: "#9a76be",
+              shift: { start: "08:00", end: "17:00" },
+              appointments: [
+                appt("08:00", "08:30", "booked", "glasses", "M. Pratt", "Annual Exam", "Exam A"),
+                appt("08:30", "09:05", "arrived", "contact", "D. Kapoor", "Contact Lens Exam", "Exam A"),
+                appt("09:05", "09:40", "booked", "glasses", "R. Owen", "Comprehensive Exam", "Exam A"),
+                appt("10:10", "10:45", "booked", "followup", "A. Elam", "Follow-up", "Exam A"),
+                appt("11:00", "11:30", "completed", "glasses", "B. Shaw", "Glasses Exam", "Exam A"),
+                appt("12:45", "13:15", "prebooked", "glasses", "N. Flores", "Exam", "Exam A"),
+                appt("13:20", "13:55", "booked", "contact", "T. Ramos", "Contact Follow-up", "Exam A"),
+                appt("14:00", "14:35", "booked", "glasses", "S. Bell", "Routine Exam", "Exam A"),
+                appt("14:40", "15:15", "booked", "glasses", "E. Kane", "Routine Exam", "Exam A")
+              ]
+            },
+            {
+              laneId: "phx-pretest",
+              laneType: "pretest",
+              doctorName: "Pretest Room",
+              color: "#ac8f4e",
+              shift: { start: "08:15", end: "16:45" },
+              appointments: [
+                appt("08:20", "08:30", "booked", "pretest", "M. Pratt", "NCT", "Pretest"),
+                appt("09:10", "09:20", "booked", "pretest", "R. Owen", "Autorefraction", "Pretest"),
+                appt("13:25", "13:35", "booked", "pretest", "T. Ramos", "Visual Acuity", "Pretest")
+              ]
+            }
+          ]
+        },
+        "st-nyc": {
+          storeId: "st-nyc",
+          storeName: "NYC Market / Store 411",
+          timeZone: "America/New_York",
+          lanes: [
+            {
+              laneId: "ny-dr-hopper",
+              laneType: "doctor",
+              doctorName: "Dr. Lucia Hopper",
+              color: "#5a81b2",
+              shift: { start: "08:00", end: "16:00" },
+              appointments: [
+                appt("08:00", "08:30", "booked", "glasses", "R. Feld", "Annual Exam", "Exam 1"),
+                appt("08:30", "09:05", "arrived", "contact", "P. Diaz", "Contact Lens Eval", "Exam 1"),
+                appt("09:05", "09:40", "booked", "glasses", "T. Lowe", "Comprehensive Exam", "Exam 1"),
+                appt("09:40", "10:15", "booked", "followup", "I. Mann", "Follow-up", "Exam 1"),
+                appt("10:15", "10:50", "completed", "glasses", "S. Kwan", "Routine Exam", "Exam 1"),
+                appt("10:50", "11:25", "booked", "glasses", "N. Adler", "Exam + Refraction", "Exam 1"),
+                appt("12:10", "12:45", "prebooked", "contact", "J. Hale", "Contact Follow-up", "Exam 1"),
+                appt("12:45", "13:20", "booked", "glasses", "E. Nash", "Comprehensive Exam", "Exam 1"),
+                appt("13:20", "13:55", "booked", "glasses", "M. Ford", "Routine Exam", "Exam 1"),
+                appt("13:55", "14:30", "cancelled", "followup", "L. Price", "Medical Follow-up", "Exam 1"),
+                appt("14:30", "15:00", "booked", "glasses", "H. Grant", "Routine Exam", "Exam 1")
+              ]
+            },
+            {
+              laneId: "ny-pretest",
+              laneType: "pretest",
+              doctorName: "Pretest Room",
+              color: "#9f8753",
+              shift: { start: "08:00", end: "15:30" },
+              appointments: [
+                appt("08:05", "08:15", "booked", "pretest", "R. Feld", "Visual Acuity", "Pretest"),
+                appt("10:55", "11:05", "booked", "pretest", "N. Adler", "Retinal Photo", "Pretest"),
+                appt("12:47", "12:57", "booked", "pretest", "E. Nash", "NCT", "Pretest")
+              ]
+            }
+          ]
+        },
+        "st-boston": {
+          storeId: "st-boston",
+          storeName: "Boston Market / Store 522",
+          timeZone: "America/New_York",
+          lanes: [
+            {
+              laneId: "bos-dr-miles",
+              laneType: "doctor",
+              doctorName: "Dr. Nadia Miles",
+              color: "#7d75bb",
+              shift: { start: "09:00", end: "18:00" },
+              appointments: [
+                appt("09:00", "09:35", "booked", "glasses", "C. Webb", "Annual Exam", "Exam B"),
+                appt("09:35", "10:10", "arrived", "contact", "K. Sloan", "Contact Lens Exam", "Exam B"),
+                appt("10:10", "10:45", "booked", "glasses", "G. Wolfe", "Comprehensive Exam", "Exam B"),
+                appt("10:45", "11:20", "booked", "glasses", "P. Muri", "Routine Exam", "Exam B"),
+                appt("11:25", "12:00", "completed", "followup", "R. Jan", "Medical Follow-up", "Exam B"),
+                appt("12:30", "13:05", "prebooked", "glasses", "A. Dolan", "Annual Exam", "Exam B"),
+                appt("13:05", "13:40", "booked", "contact", "D. Rey", "Contact Check", "Exam B"),
+                appt("13:40", "14:10", "booked", "glasses", "L. North", "Routine Exam", "Exam B"),
+                appt("14:10", "14:45", "booked", "glasses", "I. Kent", "Comprehensive Exam", "Exam B"),
+                appt("14:45", "15:20", "cancelled", "followup", "F. Pace", "Follow-up", "Exam B"),
+                appt("15:25", "16:00", "booked", "glasses", "H. Clark", "Routine Exam", "Exam B")
+              ]
+            }
+          ]
+        },
+        "st-atlanta": {
+          storeId: "st-atlanta",
+          storeName: "Atlanta Market / Store 610",
+          timeZone: "America/New_York",
+          lanes: [
+            {
+              laneId: "atl-dr-shaw",
+              laneType: "doctor",
+              doctorName: "Dr. Elise Shaw",
+              color: "#518cb7",
+              shift: { start: "08:00", end: "17:30" },
+              appointments: [
+                appt("08:00", "08:35", "booked", "glasses", "B. Meyer", "Annual Exam", "Exam C"),
+                appt("08:35", "09:10", "arrived", "contact", "Z. Yao", "Contact Lens Exam", "Exam C"),
+                appt("09:10", "09:45", "booked", "glasses", "P. Knox", "Comprehensive Exam", "Exam C"),
+                appt("09:45", "10:20", "completed", "followup", "L. Kim", "Medical Follow-up", "Exam C"),
+                appt("10:20", "10:55", "booked", "glasses", "M. Ross", "Routine Exam", "Exam C"),
+                appt("11:00", "11:35", "booked", "contact", "S. Lee", "Contact Follow-up", "Exam C"),
+                appt("12:25", "13:00", "prebooked", "glasses", "J. Vega", "Exam + Refraction", "Exam C"),
+                appt("13:00", "13:35", "booked", "glasses", "D. Wynn", "Routine Exam", "Exam C"),
+                appt("13:35", "14:10", "booked", "followup", "A. Phelps", "Follow-up", "Exam C"),
+                appt("14:10", "14:45", "booked", "glasses", "T. West", "Comprehensive Exam", "Exam C"),
+                appt("14:45", "15:20", "booked", "glasses", "I. Dunn", "Annual Exam", "Exam C"),
+                appt("15:20", "15:55", "cancelled", "contact", "W. Price", "Contact Lens Exam", "Exam C")
+              ]
+            },
+            {
+              laneId: "atl-pretest",
+              laneType: "pretest",
+              doctorName: "Pretest Room",
+              color: "#a48448",
+              shift: { start: "08:00", end: "17:00" },
+              appointments: [
+                appt("08:10", "08:20", "booked", "pretest", "B. Meyer", "Autorefraction", "Pretest"),
+                appt("11:05", "11:15", "booked", "pretest", "S. Lee", "Visual Field", "Pretest"),
+                appt("13:05", "13:15", "booked", "pretest", "D. Wynn", "NCT", "Pretest")
+              ]
+            }
+          ]
+        }
+      };
+
+      function appt(start, end, status, type, patient, title, room, flag) {
+        return {
+          id: [start, end, patient, status].join("-"),
+          start: start,
+          end: end,
+          status: status,
+          type: type,
+          patient: patient,
+          title: title,
+          room: room,
+          flag: flag || ""
+        };
+      }
+
+      const state = {
+        role: loadJson(STORAGE_KEYS.role, "Scheduler"),
+        density: loadJson(STORAGE_KEYS.density, "compact"),
+        showPretest: loadJson(STORAGE_KEYS.showPretest, true),
+        statusVisibility: loadJson(STORAGE_KEYS.statusVisibility, {
+          booked: true,
+          arrived: true,
+          completed: true,
+          prebooked: true,
+          cancelled: true
+        }),
+        layout: loadJson(STORAGE_KEYS.layout, "side-by-side"),
+        selectedRegionId: loadJson(STORAGE_KEYS.selectedRegionId, ""),
+        selectedDistrictId: loadJson(STORAGE_KEYS.selectedDistrictId, ""),
+        selectedStoreId: loadJson(STORAGE_KEYS.selectedStoreId, ""),
+        selectedLocationIds: loadJson(STORAGE_KEYS.selectedLocationIds, []),
+        retailData: null,
+        retailDataSource: "live",
+        retailError: "",
+        retailUpdatedAt: "",
+        retailLoading: false,
+        simulateRetailFailure: false,
+        trimNotice: ""
+      };
+
+      const refs = {
+        roleSelect: document.getElementById("roleSelect"),
+        densityToggle: document.getElementById("densityToggle"),
+        showPretestToggle: document.getElementById("showPretestToggle"),
+        statusChips: document.getElementById("statusChips"),
+        simulateApiFailureToggle: document.getElementById("simulateApiFailureToggle"),
+        refreshRetailButton: document.getElementById("refreshRetailButton"),
+        apiStatusMessage: document.getElementById("apiStatusMessage"),
+        scopeFiltersRow: document.getElementById("scopeFiltersRow"),
+        scopePermissionNote: document.getElementById("scopePermissionNote"),
+        layoutToggle: document.getElementById("layoutToggle"),
+        multiLocationList: document.getElementById("multiLocationList"),
+        multiLocationCapMessage: document.getElementById("multiLocationCapMessage"),
+        scheduleGrid: document.getElementById("scheduleGrid"),
+        emptyState: document.getElementById("emptyState"),
+        metaHint: document.getElementById("metaHint")
+      };
+
+      function loadJson(key, fallbackValue) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw === null) {
+            return fallbackValue;
+          }
+          return JSON.parse(raw);
+        } catch (error) {
+          return fallbackValue;
+        }
+      }
+
+      function saveJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      function isScopeRole(role) {
+        return SCOPE_ALLOWED_ROLES.has(role);
+      }
+
+      function fakeRetailApiRequest(shouldFail) {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            if (shouldFail) {
+              reject(new Error("Retail API unavailable"));
+              return;
+            }
+            resolve(RETAIL_CATALOG);
+          }, 280);
+        });
+      }
+
+      async function refreshRetailData() {
+        state.retailLoading = true;
+        renderApiStatus();
+        try {
+          const payload = await fakeRetailApiRequest(state.simulateRetailFailure);
+          state.retailData = payload;
+          state.retailDataSource = "live";
+          state.retailError = "";
+          state.retailUpdatedAt = payload.updatedAt;
+          saveJson(STORAGE_KEYS.retailCache, {
+            payload: payload,
+            cachedAt: new Date().toISOString()
+          });
+        } catch (error) {
+          const cached = loadJson(STORAGE_KEYS.retailCache, null);
+          if (cached && cached.payload) {
+            state.retailData = cached.payload;
+            state.retailDataSource = "cached";
+            state.retailUpdatedAt = cached.cachedAt;
+            state.retailError = "Retail API is unavailable. Showing last cached scope data.";
+          } else {
+            state.retailData = null;
+            state.retailDataSource = "none";
+            state.retailUpdatedAt = "";
+            state.retailError = "Retail API is unavailable and no cached scope data exists.";
+          }
+        }
+        state.retailLoading = false;
+        ensureScopeSelections();
+        renderAll();
+      }
+
+      function flattenStores(data) {
+        if (!data || !data.regions) {
+          return [];
+        }
+        const stores = [];
+        data.regions.forEach((region) => {
+          region.districts.forEach((district) => {
+            district.stores.forEach((store) => {
+              stores.push({
+                regionId: region.id,
+                regionName: region.name,
+                districtId: district.id,
+                districtName: district.name,
+                storeId: store.id,
+                storeName: store.name,
+                timeZone: store.timeZone
+              });
+            });
+          });
+        });
+        return stores;
+      }
+
+      function ensureScopeSelections() {
+        const data = state.retailData;
+        const allStores = flattenStores(data);
+        if (!allStores.length) {
+          state.selectedStoreId = ROLE_HOME_STORE[state.role] || "";
+          state.selectedLocationIds = state.selectedStoreId ? [state.selectedStoreId] : [];
+          saveScopeSelections();
+          return;
+        }
+
+        const roleDefaultStore = ROLE_HOME_STORE[state.role] || allStores[0].storeId;
+        if (!state.selectedStoreId || !allStores.some((store) => store.storeId === state.selectedStoreId)) {
+          state.selectedStoreId = roleDefaultStore;
+        }
+
+        const selectedStore = allStores.find((store) => store.storeId === state.selectedStoreId) || allStores[0];
+        if (!state.selectedRegionId || !data.regions.some((r) => r.id === state.selectedRegionId)) {
+          state.selectedRegionId = selectedStore.regionId;
+        }
+
+        const region = data.regions.find((item) => item.id === state.selectedRegionId) || data.regions[0];
+        if (!state.selectedDistrictId || !region.districts.some((d) => d.id === state.selectedDistrictId)) {
+          state.selectedDistrictId = selectedStore.regionId === region.id ? selectedStore.districtId : region.districts[0].id;
+        }
+
+        const district = region.districts.find((d) => d.id === state.selectedDistrictId) || region.districts[0];
+        if (!district.stores.some((store) => store.id === state.selectedStoreId)) {
+          state.selectedStoreId = district.stores[0].id;
+        }
+
+        if (!isScopeRole(state.role)) {
+          const fallbackStore = roleDefaultStore;
+          state.selectedStoreId = allStores.some((store) => store.storeId === fallbackStore)
+            ? fallbackStore
+            : allStores[0].storeId;
+          state.selectedLocationIds = [state.selectedStoreId];
+          saveScopeSelections();
+          return;
+        }
+
+        const candidateStores = getCandidateMultiLocationStores();
+        const candidateStoreIds = new Set(candidateStores.map((store) => store.storeId));
+        let selected = Array.isArray(state.selectedLocationIds) ? state.selectedLocationIds.filter((id) => candidateStoreIds.has(id)) : [];
+
+        if (!selected.length) {
+          selected = [state.selectedStoreId];
+        }
+
+        if (!selected.includes(state.selectedStoreId)) {
+          selected.unshift(state.selectedStoreId);
+        }
+
+        const maxSelectable = state.density === "compact" ? 4 : 3;
+        if (selected.length > maxSelectable) {
+          selected = selected.slice(0, maxSelectable);
+          state.trimNotice = "Location selection trimmed to fit current density without scrolling.";
+        } else {
+          state.trimNotice = "";
+        }
+
+        state.selectedLocationIds = selected;
+        saveScopeSelections();
+      }
+
+      function saveScopeSelections() {
+        saveJson(STORAGE_KEYS.selectedRegionId, state.selectedRegionId);
+        saveJson(STORAGE_KEYS.selectedDistrictId, state.selectedDistrictId);
+        saveJson(STORAGE_KEYS.selectedStoreId, state.selectedStoreId);
+        saveJson(STORAGE_KEYS.selectedLocationIds, state.selectedLocationIds);
+      }
+
+      function getRegionById(regionId) {
+        if (!state.retailData) {
+          return null;
+        }
+        return state.retailData.regions.find((region) => region.id === regionId) || null;
+      }
+
+      function getDistrictById(region, districtId) {
+        if (!region) {
+          return null;
+        }
+        return region.districts.find((district) => district.id === districtId) || null;
+      }
+
+      function getStoreById(storeId) {
+        const stores = flattenStores(state.retailData);
+        return stores.find((store) => store.storeId === storeId) || null;
+      }
+
+      function getCandidateMultiLocationStores() {
+        const stores = flattenStores(state.retailData);
+        if (!stores.length) {
+          return [];
+        }
+        if (!isScopeRole(state.role)) {
+          const homeStoreId = ROLE_HOME_STORE[state.role];
+          return stores.filter((store) => store.storeId === homeStoreId);
+        }
+        return stores.filter((store) => store.regionId === state.selectedRegionId);
+      }
+
+      function parseMinutes(value) {
+        const parts = value.split(":").map(Number);
+        return parts[0] * 60 + parts[1];
+      }
+
+      function toClock(minutes) {
+        const hour24 = Math.floor(minutes / 60);
+        const minute = String(minutes % 60).padStart(2, "0");
+        const suffix = hour24 >= 12 ? "PM" : "AM";
+        const hour12 = hour24 % 12 || 12;
+        return hour12 + ":" + minute + " " + suffix;
+      }
+
+      function formatShortTZ(tz) {
+        if (!tz) {
+          return "";
+        }
+        const parts = tz.split("/");
+        return parts[parts.length - 1].replace(/_/g, " ");
+      }
+
+      function timeInTimeZone(tz) {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: tz,
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false
+        }).formatToParts(now);
+        const hour = Number(parts.find((part) => part.type === "hour").value);
+        const minute = Number(parts.find((part) => part.type === "minute").value);
+        return { minutes: hour * 60 + minute, label: toClock(hour * 60 + minute) };
+      }
+
+      function computeAvailableIntervals(shiftStart, shiftEnd, appointments) {
+        const start = parseMinutes(shiftStart);
+        const end = parseMinutes(shiftEnd);
+        const busy = appointments
+          .filter((item) => OCCUPYING_STATUSES.has(item.status))
+          .map((item) => [parseMinutes(item.start), parseMinutes(item.end)])
+          .filter((range) => range[1] > start && range[0] < end)
+          .map((range) => [Math.max(start, range[0]), Math.min(end, range[1])])
+          .sort((a, b) => a[0] - b[0]);
+
+        const merged = [];
+        busy.forEach((range) => {
+          if (!merged.length || range[0] > merged[merged.length - 1][1]) {
+            merged.push([range[0], range[1]]);
+          } else {
+            merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], range[1]);
+          }
+        });
+
+        const available = [];
+        let cursor = start;
+        merged.forEach((range) => {
+          if (range[0] > cursor) {
+            available.push([cursor, range[0]]);
+          }
+          cursor = Math.max(cursor, range[1]);
+        });
+        if (cursor < end) {
+          available.push([cursor, end]);
+        }
+        return available.filter((range) => range[1] - range[0] >= 10);
+      }
+
+      function buildRoleOptions() {
+        refs.roleSelect.innerHTML = ALL_ROLES.map((role) => "<option>" + role + "</option>").join("");
+        refs.roleSelect.value = state.role;
+      }
+
+      function renderDensityToggle() {
+        const buttons = refs.densityToggle.querySelectorAll("button");
+        buttons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.density === state.density);
+        });
+      }
+
+      function renderLayoutToggle() {
+        const buttons = refs.layoutToggle.querySelectorAll("button");
+        buttons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.layout === state.layout);
+        });
+      }
+
+      function renderStatusChips() {
+        refs.statusChips.innerHTML = STATUS_ORDER.map((status) => {
+          const enabled = !!state.statusVisibility[status];
+          const cssClass = enabled ? "" : "off";
+          return (
+            '<button type="button" class="chip-toggle ' +
+            cssClass +
+            '" data-status="' +
+            status +
+            '">' +
+            STATUS_LABELS[status] +
+            "</button>"
+          );
+        }).join("");
+      }
+
+      function renderApiStatus() {
+        if (state.retailLoading) {
+          refs.apiStatusMessage.className = "scope-note";
+          refs.apiStatusMessage.textContent = "Loading Retail API data...";
+          return;
+        }
+        if (state.retailError) {
+          refs.apiStatusMessage.className =
+            "scope-note " + (state.retailDataSource === "cached" ? "warning" : "error");
+          refs.apiStatusMessage.textContent = state.retailError;
+          return;
+        }
+        refs.apiStatusMessage.className = "scope-note success";
+        refs.apiStatusMessage.textContent = "Retail data source: live";
+      }
+
+      function renderScopeFilters() {
+        const roleCanScope = isScopeRole(state.role);
+        refs.scopeFiltersRow.innerHTML = "";
+        if (!roleCanScope) {
+          refs.scopePermissionNote.className = "scope-note warning";
+          refs.scopePermissionNote.textContent =
+            "Role does not include region/district/store scope controls. Showing home store schedule only.";
+          return;
+        }
+
+        refs.scopePermissionNote.className = "scope-note";
+        refs.scopePermissionNote.textContent =
+          "Single-select scope filter (region/district/store). Multi-location compare is configured below.";
+
+        if (!state.retailData) {
+          refs.scopeFiltersRow.innerHTML = '<span class="scope-note error">No scope data available.</span>';
+          return;
+        }
+
+        const region = getRegionById(state.selectedRegionId) || state.retailData.regions[0];
+        const district = getDistrictById(region, state.selectedDistrictId) || region.districts[0];
+
+        refs.scopeFiltersRow.innerHTML =
+          '<div class="field"><label for="regionSelect">Region</label><select id="regionSelect"></select></div>' +
+          '<div class="field"><label for="districtSelect">District</label><select id="districtSelect"></select></div>' +
+          '<div class="field"><label for="storeSelect">Store</label><select id="storeSelect"></select></div>';
+
+        const regionSelect = document.getElementById("regionSelect");
+        const districtSelect = document.getElementById("districtSelect");
+        const storeSelect = document.getElementById("storeSelect");
+
+        regionSelect.innerHTML = state.retailData.regions
+          .map((item) => '<option value="' + item.id + '">' + item.name + "</option>")
+          .join("");
+        regionSelect.value = state.selectedRegionId;
+
+        districtSelect.innerHTML = region.districts
+          .map((item) => '<option value="' + item.id + '">' + item.name + "</option>")
+          .join("");
+        districtSelect.value = state.selectedDistrictId;
+
+        storeSelect.innerHTML = district.stores
+          .map((item) => '<option value="' + item.id + '">' + item.name + "</option>")
+          .join("");
+        storeSelect.value = state.selectedStoreId;
+      }
+
+      function renderMultiLocationOptions() {
+        const roleCanScope = isScopeRole(state.role);
+        const maxSelectable = state.density === "compact" ? 4 : 3;
+        refs.multiLocationCapMessage.textContent =
+          "Max locations for " + state.density + " view: " + maxSelectable + ".";
+
+        if (!roleCanScope) {
+          refs.multiLocationList.innerHTML =
+            '<div class="location-option"><span>Multi-location disabled for this role.</span></div>';
+          return;
+        }
+
+        const candidateStores = getCandidateMultiLocationStores();
+        refs.multiLocationList.innerHTML = candidateStores
+          .map((store) => {
+            const selected = state.selectedLocationIds.includes(store.storeId) ? "checked" : "";
+            return (
+              '<label class="location-option">' +
+              "<span>" +
+              store.storeName +
+              "<small>" +
+              store.districtName +
+              " · " +
+              formatShortTZ(store.timeZone) +
+              "</small></span>" +
+              '<input type="checkbox" data-location-id="' +
+              store.storeId +
+              '" ' +
+              selected +
+              " />" +
+              "</label>"
+            );
+          })
+          .join("");
+
+        if (!candidateStores.length) {
+          refs.multiLocationList.innerHTML =
+            '<div class="location-option"><span>No locations available for this scope.</span></div>';
+        }
+      }
+
+      function renderMetaHint() {
+        const now = new Date();
+        refs.metaHint.textContent =
+          "Prototype time: " +
+          now.toLocaleString([], { hour: "2-digit", minute: "2-digit" }) +
+          " · Preference persistence enabled.";
+      }
+
+      function currentDayConfig() {
+        if (state.density === "compact") {
+          return { dayStart: 7 * 60, dayEnd: 19 * 60, boardHeight: 560, minCardHeight: 28 };
+        }
+        return { dayStart: 7 * 60, dayEnd: 19 * 60, boardHeight: 760, minCardHeight: 38 };
+      }
+
+      function minuteToTop(minute, cfg) {
+        return ((minute - cfg.dayStart) / (cfg.dayEnd - cfg.dayStart)) * cfg.boardHeight;
+      }
+
+      function renderScheduleBoards() {
+        refs.scheduleGrid.innerHTML = "";
+        refs.emptyState.hidden = true;
+        refs.scheduleGrid.classList.toggle("side-by-side", state.layout === "side-by-side");
+
+        const storesToRender = resolveStoresToRender();
+        if (!storesToRender.length) {
+          refs.emptyState.hidden = false;
+          refs.emptyState.textContent = "No schedules available for the current scope.";
+          return;
+        }
+
+        if (state.layout === "combined") {
+          const combinedStore = buildCombinedStore(storesToRender);
+          const boardNode = buildStoreBoard(combinedStore, true);
+          refs.scheduleGrid.appendChild(boardNode);
+          return;
+        }
+
+        storesToRender.forEach((store) => {
+          const boardNode = buildStoreBoard(store, false);
+          refs.scheduleGrid.appendChild(boardNode);
+        });
+      }
+
+      function resolveStoresToRender() {
+        const allStores = flattenStores(state.retailData);
+        const allStoreMap = new Map(allStores.map((store) => [store.storeId, store]));
+        if (!allStores.length) {
+          return [];
+        }
+
+        if (!isScopeRole(state.role)) {
+          const storeId = ROLE_HOME_STORE[state.role] || allStores[0].storeId;
+          const schedule = SCHEDULES[storeId];
+          return schedule ? [schedule] : [];
+        }
+
+        const selectedIds = Array.isArray(state.selectedLocationIds) && state.selectedLocationIds.length
+          ? state.selectedLocationIds
+          : [state.selectedStoreId];
+
+        return selectedIds
+          .map((id) => {
+            const schedule = SCHEDULES[id];
+            const info = allStoreMap.get(id);
+            if (!schedule || !info) {
+              return null;
+            }
+            return {
+              storeId: schedule.storeId,
+              storeName: info.storeName,
+              timeZone: info.timeZone,
+              lanes: schedule.lanes
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function buildCombinedStore(stores) {
+        const lanes = [];
+        stores.forEach((store) => {
+          store.lanes.forEach((lane) => {
+            lanes.push({
+              laneId: store.storeId + "-" + lane.laneId,
+              laneType: lane.laneType,
+              doctorName: lane.doctorName,
+              color: lane.color,
+              shift: lane.shift,
+              appointments: lane.appointments,
+              locationTag: store.storeName,
+              timeZone: store.timeZone
+            });
+          });
+        });
+        return {
+          storeId: "combined",
+          storeName: "Combined Timeline (" + stores.length + " locations)",
+          timeZone: "",
+          lanes: lanes
+        };
+      }
+
+      function buildStoreBoard(store, isCombined) {
+        const cfg = currentDayConfig();
+        const board = document.createElement("article");
+        board.className = "store-board " + (state.density === "compact" ? "compact" : "cozy");
+
+        const upcoming = computeUpcoming(store, isCombined);
+        const localTimeLabel = isCombined
+          ? "Multiple time zones"
+          : "Local time (" + formatShortTZ(store.timeZone) + "): " + timeInTimeZone(store.timeZone).label;
+
+        board.innerHTML =
+          '<header class="store-board-header">' +
+          "<div><h3>" +
+          store.storeName +
+          "</h3><p>" +
+          localTimeLabel +
+          "</p></div>" +
+          '<div class="upcoming">' +
+          (upcoming ? "<strong>Next:</strong> " + upcoming : "No upcoming appointments") +
+          "</div>" +
+          "</header>";
+
+        const boardBody = document.createElement("section");
+        boardBody.className = "board";
+
+        const visibleLanes = store.lanes.filter((lane) => {
+          if (lane.laneType === "pretest" && !state.showPretest) {
+            return false;
+          }
+          return true;
+        });
+
+        if (!visibleLanes.length) {
+          const noLanes = document.createElement("div");
+          noLanes.className = "empty-state";
+          noLanes.textContent = "All lanes hidden by current filters.";
+          board.appendChild(noLanes);
+          return board;
+        }
+
+        const timeRail = document.createElement("aside");
+        timeRail.className = "time-rail";
+        timeRail.style.height = cfg.boardHeight + 56 + "px";
+        for (let hour = 7; hour <= 19; hour += 1) {
+          const top = minuteToTop(hour * 60, cfg) + 56;
+          const label = document.createElement("div");
+          label.className = "time-label";
+          label.style.top = top + "px";
+          label.textContent = toClock(hour * 60).replace(":00 ", " ");
+          timeRail.appendChild(label);
+        }
+        boardBody.appendChild(timeRail);
+
+        const lanes = document.createElement("div");
+        lanes.className = "lanes";
+        lanes.style.gridTemplateColumns = "repeat(" + visibleLanes.length + ", minmax(240px, 1fr))";
+
+        visibleLanes.forEach((lane) => {
+          lanes.appendChild(buildLaneNode(lane, store, cfg, isCombined));
+        });
+
+        boardBody.appendChild(lanes);
+        board.appendChild(boardBody);
+        return board;
+      }
+
+      function buildLaneNode(lane, store, cfg, isCombined) {
+        const laneNode = document.createElement("article");
+        laneNode.className = "lane";
+        laneNode.innerHTML =
+          '<header class="lane-header">' +
+          "<strong>" +
+          lane.doctorName +
+          "</strong>" +
+          "<span>" +
+          lane.shift.start +
+          " - " +
+          lane.shift.end +
+          (isCombined ? " · " + lane.locationTag : "") +
+          "</span>" +
+          "</header>";
+
+        const body = document.createElement("div");
+        body.className = "lane-body";
+        body.style.height = cfg.boardHeight + "px";
+
+        for (let hour = 7; hour <= 19; hour += 1) {
+          const top = minuteToTop(hour * 60, cfg);
+          const line = document.createElement("div");
+          line.className = "hour-line";
+          line.style.top = top + "px";
+          body.appendChild(line);
+        }
+
+        const shiftStart = parseMinutes(lane.shift.start);
+        const shiftEnd = parseMinutes(lane.shift.end);
+        const shiftTop = minuteToTop(shiftStart, cfg);
+        const shiftHeight = Math.max(minuteToTop(shiftEnd, cfg) - shiftTop, 18);
+
+        const shiftBlock = document.createElement("div");
+        shiftBlock.className = "shift-block";
+        shiftBlock.style.setProperty("--lane-color", lane.color || "#8ea7ce");
+        shiftBlock.style.top = shiftTop + "px";
+        shiftBlock.style.height = shiftHeight + "px";
+        shiftBlock.style.left = "4px";
+        shiftBlock.style.right = "4px";
+        shiftBlock.innerHTML =
+          '<div class="shift-label-inline">' +
+          lane.doctorName +
+          " · Shift " +
+          lane.shift.start +
+          "-" +
+          lane.shift.end +
+          "</div>";
+        body.appendChild(shiftBlock);
+
+        const available = computeAvailableIntervals(lane.shift.start, lane.shift.end, lane.appointments);
+        available.forEach((range) => {
+          const top = minuteToTop(range[0], cfg);
+          const height = Math.max(minuteToTop(range[1], cfg) - top, 8);
+          const availableNode = document.createElement("div");
+          availableNode.className = "availability-block";
+          availableNode.style.top = top + "px";
+          availableNode.style.height = height + "px";
+          body.appendChild(availableNode);
+        });
+
+        const visibleAppointments = lane.appointments.filter((item) => !!state.statusVisibility[item.status]);
+        visibleAppointments.forEach((item) => {
+          const start = parseMinutes(item.start);
+          const end = parseMinutes(item.end);
+          const top = minuteToTop(start, cfg);
+          const height = Math.max(minuteToTop(end, cfg) - top, cfg.minCardHeight);
+          const card = document.createElement("section");
+          card.className = "appt status-" + item.status + " type-" + item.type;
+          card.style.top = top + "px";
+          card.style.height = height + "px";
+          card.innerHTML =
+            '<div class="line-one"><span class="badge">' +
+            item.type.toUpperCase() +
+            "</span><small>" +
+            item.start +
+            "-" +
+            item.end +
+            "</small></div>" +
+            "<h4>" +
+            item.title +
+            "</h4>" +
+            "<p>" +
+            item.patient +
+            "</p>" +
+            '<div class="meta">' +
+            STATUS_LABELS[item.status] +
+            " · " +
+            item.room +
+            "</div>" +
+            (item.flag ? '<span class="flag">' + item.flag.toUpperCase() + "</span>" : "");
+          body.appendChild(card);
+        });
+
+        if (state.density === "cozy") {
+          const tz = lane.timeZone || store.timeZone;
+          if (tz) {
+            const localNow = timeInTimeZone(tz);
+            const minute = localNow.minutes;
+            if (minute >= cfg.dayStart && minute <= cfg.dayEnd) {
+              const line = document.createElement("div");
+              line.className = "now-line";
+              line.style.top = minuteToTop(minute, cfg) + "px";
+              line.dataset.label = "Now " + localNow.label;
+              body.appendChild(line);
+            }
+          }
+        }
+
+        laneNode.appendChild(body);
+        return laneNode;
+      }
+
+      function computeUpcoming(store, isCombined) {
+        const upcomingEntries = [];
+        const seen = new Set();
+
+        store.lanes.forEach((lane) => {
+          if (lane.laneType === "pretest" && !state.showPretest) {
+            return;
+          }
+          const tz = lane.timeZone || store.timeZone;
+          if (!tz) {
+            return;
+          }
+          const now = timeInTimeZone(tz).minutes;
+          lane.appointments.forEach((item) => {
+            if (item.status === "cancelled") {
+              return;
+            }
+            const start = parseMinutes(item.start);
+            if (start >= now) {
+              const key = lane.laneId + "-" + item.id;
+              if (seen.has(key)) {
+                return;
+              }
+              seen.add(key);
+              upcomingEntries.push({
+                minute: start,
+                text:
+                  item.start +
+                  " " +
+                  lane.doctorName +
+                  (isCombined ? " (" + (lane.locationTag || "") + ")" : "") +
+                  " · " +
+                  item.patient
+              });
+            }
+          });
+        });
+
+        upcomingEntries.sort((a, b) => a.minute - b.minute);
+        if (!upcomingEntries.length) {
+          return "";
+        }
+        return upcomingEntries
+          .slice(0, state.density === "compact" ? 1 : 2)
+          .map((item) => item.text)
+          .join(" | ");
+      }
+
+      function renderAll() {
+        renderMetaHint();
+        buildRoleOptions();
+        refs.showPretestToggle.checked = !!state.showPretest;
+        refs.simulateApiFailureToggle.checked = !!state.simulateRetailFailure;
+        renderDensityToggle();
+        renderLayoutToggle();
+        renderStatusChips();
+        renderApiStatus();
+        renderScopeFilters();
+        renderMultiLocationOptions();
+        renderScheduleBoards();
+
+        if (state.trimNotice) {
+          refs.multiLocationCapMessage.textContent += " " + state.trimNotice;
+        }
+      }
+
+      function bindEvents() {
+        refs.roleSelect.addEventListener("change", () => {
+          state.role = refs.roleSelect.value;
+          saveJson(STORAGE_KEYS.role, state.role);
+          ensureScopeSelections();
+          renderAll();
+        });
+
+        refs.densityToggle.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement) || !target.dataset.density) {
+            return;
+          }
+          state.density = target.dataset.density;
+          saveJson(STORAGE_KEYS.density, state.density);
+          ensureScopeSelections();
+          renderAll();
+        });
+
+        refs.layoutToggle.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement) || !target.dataset.layout) {
+            return;
+          }
+          state.layout = target.dataset.layout;
+          saveJson(STORAGE_KEYS.layout, state.layout);
+          renderAll();
+        });
+
+        refs.showPretestToggle.addEventListener("change", () => {
+          state.showPretest = refs.showPretestToggle.checked;
+          saveJson(STORAGE_KEYS.showPretest, state.showPretest);
+          renderAll();
+        });
+
+        refs.statusChips.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement) || !target.dataset.status) {
+            return;
+          }
+          const status = target.dataset.status;
+          state.statusVisibility[status] = !state.statusVisibility[status];
+          saveJson(STORAGE_KEYS.statusVisibility, state.statusVisibility);
+          renderAll();
+        });
+
+        refs.simulateApiFailureToggle.addEventListener("change", () => {
+          state.simulateRetailFailure = refs.simulateApiFailureToggle.checked;
+        });
+
+        refs.refreshRetailButton.addEventListener("click", () => {
+          refreshRetailData();
+        });
+
+        refs.scopeFiltersRow.addEventListener("change", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLSelectElement)) {
+            return;
+          }
+          if (target.id === "regionSelect") {
+            state.selectedRegionId = target.value;
+            const region = getRegionById(state.selectedRegionId);
+            if (region) {
+              state.selectedDistrictId = region.districts[0].id;
+              state.selectedStoreId = region.districts[0].stores[0].id;
+            }
+          } else if (target.id === "districtSelect") {
+            state.selectedDistrictId = target.value;
+            const region = getRegionById(state.selectedRegionId);
+            const district = getDistrictById(region, state.selectedDistrictId);
+            if (district) {
+              state.selectedStoreId = district.stores[0].id;
+            }
+          } else if (target.id === "storeSelect") {
+            state.selectedStoreId = target.value;
+          }
+
+          if (!state.selectedLocationIds.includes(state.selectedStoreId)) {
+            state.selectedLocationIds.unshift(state.selectedStoreId);
+          }
+
+          ensureScopeSelections();
+          renderAll();
+        });
+
+        refs.multiLocationList.addEventListener("change", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLInputElement) || !target.dataset.locationId) {
+            return;
+          }
+          const id = target.dataset.locationId;
+          const selected = new Set(state.selectedLocationIds);
+          if (target.checked) {
+            selected.add(id);
+          } else {
+            selected.delete(id);
+          }
+          if (!selected.has(state.selectedStoreId)) {
+            selected.add(state.selectedStoreId);
+          }
+          state.selectedLocationIds = Array.from(selected);
+          ensureScopeSelections();
+          renderAll();
+        });
+      }
+
+      async function init() {
+        bindEvents();
+        await refreshRetailData();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
