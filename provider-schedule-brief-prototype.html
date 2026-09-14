@@ -932,13 +932,12 @@
         <h2>Multi-Location View</h2>
         <div class="row">
           <div class="field">
-            <label>Layout</label>
+            <label>Timeline Mode</label>
             <div class="segmented" id="layoutToggle">
-              <button type="button" data-layout="side-by-side">Side by side</button>
-              <button type="button" data-layout="combined">Combined timeline</button>
+              <button type="button" data-layout="combined">Global timeline</button>
             </div>
           </div>
-          <span class="scope-note" id="multiLocationCapMessage"></span>
+          <span class="scope-note" id="multiLocationCapMessage">All selected lanes share one timeline axis.</span>
         </div>
         <div class="locations-list" id="multiLocationList"></div>
       </section>
@@ -1383,7 +1382,7 @@
           prebooked: true,
           cancelled: true
         }),
-        layout: loadJson(STORAGE_KEYS.layout, "side-by-side"),
+        layout: "combined",
         selectedRegionId: loadJson(STORAGE_KEYS.selectedRegionId, ""),
         selectedDistrictId: loadJson(STORAGE_KEYS.selectedDistrictId, ""),
         selectedStoreId: loadJson(STORAGE_KEYS.selectedStoreId, ""),
@@ -2071,7 +2070,7 @@
         closeStackPopover();
         refs.scheduleGrid.innerHTML = "";
         refs.emptyState.hidden = true;
-        refs.scheduleGrid.classList.toggle("side-by-side", state.layout === "side-by-side");
+        refs.scheduleGrid.classList.remove("side-by-side");
 
         const storesToRender = resolveStoresToRender();
         if (!storesToRender.length) {
@@ -2080,17 +2079,9 @@
           return;
         }
 
-        if (state.layout === "combined") {
-          const combinedStore = buildCombinedStore(storesToRender);
-          const boardNode = buildStoreBoard(combinedStore, true);
-          refs.scheduleGrid.appendChild(boardNode);
-          return;
-        }
-
-        storesToRender.forEach((store) => {
-          const boardNode = buildStoreBoard(store, false);
-          refs.scheduleGrid.appendChild(boardNode);
-        });
+        const combinedStore = buildCombinedStore(storesToRender);
+        const boardNode = buildStoreBoard(combinedStore, true);
+        refs.scheduleGrid.appendChild(boardNode);
       }
 
       function resolveStoresToRender() {
@@ -2143,9 +2134,24 @@
             });
           });
         });
+        lanes.sort((left, right) => {
+          const locationCompare = (left.locationTag || "").localeCompare(right.locationTag || "");
+          if (locationCompare !== 0) {
+            return locationCompare;
+          }
+          if (left.laneType !== right.laneType) {
+            if (left.laneType === "pretest") {
+              return 1;
+            }
+            if (right.laneType === "pretest") {
+              return -1;
+            }
+          }
+          return left.doctorName.localeCompare(right.doctorName);
+        });
         return {
           storeId: "combined",
-          storeName: "Combined Timeline (" + stores.length + " locations)",
+          storeName: "Global Timeline (" + stores.length + " locations)",
           timeZone: "",
           lanes: lanes
         };
@@ -2589,6 +2595,7 @@
       }
 
       async function init() {
+        saveJson(STORAGE_KEYS.layout, "combined");
         bindEvents();
         await refreshRetailData();
       }
